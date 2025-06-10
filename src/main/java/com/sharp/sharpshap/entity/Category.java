@@ -18,8 +18,8 @@ public class Category {
     @Column(nullable = false , length = 50 , unique = true)
     private String name;
 
-    @Column(precision = 15, scale = 2)
-    private BigDecimal coefficientSales = BigDecimal.ZERO;
+    @Column(name = "coefficient_sale",precision = 15, scale = 2)
+    private BigDecimal coefficientSale = BigDecimal.ZERO;
 
     @OneToMany(mappedBy = "category")
     private List<CategorySubcategory> categorySubcategories;

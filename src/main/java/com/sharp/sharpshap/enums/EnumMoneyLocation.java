@@ -18,6 +18,6 @@ public class EnumMoneyLocation{
     private String path;
 
     @ManyToOne
-    @JoinColumn(name = "location_id")
+    @JoinColumn(name = "payment_transaction_id")
     private PaymentTransaction paymentTransaction;
 }

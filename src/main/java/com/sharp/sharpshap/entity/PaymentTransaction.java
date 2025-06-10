@@ -16,7 +16,7 @@ public class PaymentTransaction {
     @GeneratedValue
     private UUID id;
 
-    @OneToMany(mappedBy = "paymentTransaction",cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "paymentTransaction", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<EnumTypePayment> typesPayments;
 
     private BigDecimal cashAmount;

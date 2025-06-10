@@ -4,6 +4,11 @@ CREATE TABLE payment_transaction (
     cashless_amount DECIMAL(10, 2) DEFAULT 0.00,
     credit_amount DECIMAL(10, 2) DEFAULT 0.00
 );
+CREATE TABLE category (
+    id UUID PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    coefficient_sale DECIMAL(15, 2) DEFAULT 0.00
+);
 CREATE TABLE enum_role (
     id UUID PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE
@@ -12,7 +17,7 @@ CREATE TABLE "user" (
     id UUID PRIMARY KEY,
     login VARCHAR(50) NOT NULL UNIQUE,
     first_name VARCHAR(100) NOT NULL,
-    last_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL UNIQUE,
     salary DOUBLE NOT NULL,
     password VARCHAR(255) NOT NULL,
     enable BOOLEAN NOT NULL DEFAULT TRUE,
@@ -22,11 +27,6 @@ CREATE TABLE user_role (
     user_id UUID NOT NULL REFERENCES "user"(id),
     role_id UUID NOT NULL REFERENCES enum_role(id),
     PRIMARY KEY (user_id, role_id)
-);
-CREATE TABLE category (
-    id UUID PRIMARY KEY,
-    name VARCHAR(50) NOT NULL UNIQUE,
-    coefficient_sales DECIMAL(15, 2) DEFAULT 0.00
 );
 CREATE TABLE subcategory (
     id UUID PRIMARY KEY,
@@ -81,7 +81,7 @@ CREATE TABLE enum_type_payment (
 CREATE TABLE enum_money_location (
     id UUID PRIMARY KEY,
     path VARCHAR(255) UNIQUE NOT NULL,
-    location_id UUID REFERENCES payment_transaction(id)
+     payment_transaction_id UUID REFERENCES payment_transaction(id)
 );
 CREATE TABLE discount (
     id UUID PRIMARY KEY,
