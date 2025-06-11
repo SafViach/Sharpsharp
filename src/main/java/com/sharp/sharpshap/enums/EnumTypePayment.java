@@ -16,9 +16,4 @@ public class EnumTypePayment{
 
     @Column(nullable = false , unique = true)
     private String type;
-
-    @ManyToOne
-    @JoinColumn(name = "type_payment_id")
-    private PaymentTransaction paymentTransaction;
-
 }

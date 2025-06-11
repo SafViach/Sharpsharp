@@ -4,6 +4,25 @@ CREATE TABLE payment_transaction (
     cashless_amount DECIMAL(10, 2) DEFAULT 0.00,
     credit_amount DECIMAL(10, 2) DEFAULT 0.00
 );
+
+CREATE TABLE enum_money_location (
+    id UUID PRIMARY KEY,
+    path VARCHAR(255) UNIQUE NOT NULL
+);
+
+CREATE TABLE enum_type_payment (
+    id UUID PRIMARY KEY,
+    type VARCHAR(50) NOT NULL UNIQUE
+);
+
+CREATE TABLE payment_transaction_money_location (
+    id UUID PRIMARY KEY,
+    payment_transaction_id UUID NOT NULL REFERENCES payment_transaction(id),
+    enum_money_location_id UUID NOT NULL REFERENCES enum_money_location(id),
+    enum_type_payment_id UUID NOT NULL REFERENCES enum_type_payment(id),
+    amount DECIMAL(10, 2) NOT NULL
+);
+
 CREATE TABLE category (
     id UUID PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE,
@@ -72,17 +91,6 @@ CREATE TABLE enum_status_product (
     status VARCHAR(50) NOT NULL UNIQUE
 );
 
-CREATE TABLE enum_type_payment (
-    id UUID PRIMARY KEY,
-    type VARCHAR(50) NOT NULL UNIQUE,
-    type_payment_id UUID REFERENCES payment_transaction(id)
-);
-
-CREATE TABLE enum_money_location (
-    id UUID PRIMARY KEY,
-    path VARCHAR(255) UNIQUE NOT NULL,
-     payment_transaction_id UUID REFERENCES payment_transaction(id)
-);
 CREATE TABLE discount (
     id UUID PRIMARY KEY,
     discount_amount DECIMAL(15, 2) NOT NULL

@@ -17,7 +17,4 @@ public class EnumMoneyLocation{
     @Column(nullable = false , unique = true)
     private String path;
 
-    @ManyToOne
-    @JoinColumn(name = "payment_transaction_id")
-    private PaymentTransaction paymentTransaction;
 }
