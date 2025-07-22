@@ -69,3 +69,9 @@ INSERT INTO category (id, name) VALUES
     (RANDOM_UUID(), 'Микрофоны'),
     (RANDOM_UUID(), 'Держатели'),
     (RANDOM_UUID(), 'Адаптеры');
+
+INSERT INTO subcategory (id, name) VALUES
+    (RANDOM_UUID(), 'Кнопки'),
+    (RANDOM_UUID(), 'Смартфоны'),
+    (RANDOM_UUID(), 'Глянцевые'),
+    (RANDOM_UUID(), 'Матовые');

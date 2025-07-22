@@ -1,7 +1,7 @@
 package com.sharp.sharpshap.controller;
 
 
-import com.sharp.sharpshap.dto.DTOUser;
+import com.sharp.sharpshap.dto.UserDTO;
 import com.sharp.sharpshap.entity.User;
 import com.sharp.sharpshap.error.ErrorResponse;
 import com.sharp.sharpshap.service.UserService;
@@ -10,16 +10,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.stereotype.Repository;
-import org.springframework.stereotype.Service;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -35,7 +30,7 @@ public class UserController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Object> createUser(@Valid @RequestBody DTOUser dtoUser, BindingResult result) {
+    public ResponseEntity<Object> createUser(@Valid @RequestBody UserDTO dtoUser, BindingResult result) {
         if (result.hasErrors()) {
             String errors = result.getFieldErrors().stream()
                     .map(error -> error.getField() + ": " + error.getDefaultMessage())
@@ -68,7 +63,7 @@ public class UserController {
             }
             return ResponseEntity.ok(userService.updateUser(id, user));
         } catch (RuntimeException e) {
-            return ErrorResponse.error(e);
+            return ErrorResponse.error(new UsernameNotFoundException(""),HttpStatus.NOT_FOUND);
         }
     }
 

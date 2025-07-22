@@ -2,6 +2,7 @@ package com.sharp.sharpshap.controller;
 
 import com.sharp.sharpshap.entity.TradePoint;
 import com.sharp.sharpshap.error.ErrorResponse;
+import com.sharp.sharpshap.exceptions.TradePointNotFoundException;
 import com.sharp.sharpshap.service.TradePointService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +31,7 @@ public class TradePointController {
         try {
             return ResponseEntity.ok().body(tradePointService.getAllTradePoints());
         } catch (RuntimeException e) {
-            return ErrorResponse.error(e);
+            return ErrorResponse.error(new TradePointNotFoundException(""),HttpStatus.NOT_FOUND);
         }
     }
 
@@ -65,7 +66,7 @@ public class TradePointController {
             }
             return ResponseEntity.ok().body(tradePointService.updateTradePoint(id , tradePoint));
         } catch (RuntimeException e) {
-            return ErrorResponse.error(e);
+            return ErrorResponse.error(new TradePointNotFoundException(""),HttpStatus.NOT_FOUND);
         }
     }
     @DeleteMapping("/{id}")
@@ -74,7 +75,7 @@ public class TradePointController {
             tradePointService.deleteByIdTradePoint(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
-            return ErrorResponse.error(e);
+            return ErrorResponse.error(new TradePointNotFoundException(""),HttpStatus.NOT_FOUND);
         }
     }
 

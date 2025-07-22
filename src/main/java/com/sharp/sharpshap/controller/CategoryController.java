@@ -2,6 +2,7 @@ package com.sharp.sharpshap.controller;
 
 import com.sharp.sharpshap.entity.Category;
 import com.sharp.sharpshap.error.ErrorResponse;
+import com.sharp.sharpshap.exceptions.CategoryNotFoundException;
 import com.sharp.sharpshap.service.CategoryService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
@@ -29,13 +31,13 @@ public class CategoryController {
         try {
             return ResponseEntity.ok().body(categoryService.getAllCategory());
         } catch (RuntimeException e) {
-            return ErrorResponse.error(e);
+            return ErrorResponse.error(new CategoryNotFoundException("Categories not found"),HttpStatus.NOT_FOUND);
         }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Object> getCategoryById(@PathVariable int id) {
-        return ResponseEntity.ok().body(categoryService.getCategoryById(id));
+    public ResponseEntity<Object> getCategoryById(@PathVariable UUID uuid) {
+        return ResponseEntity.ok().body(categoryService.getCategoryById(uuid));
     }
 
 //    @PutMapping("/{id}")

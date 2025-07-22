@@ -1,0 +1,13 @@
+package com.sharp.sharpshap.repository;
+
+import com.sharp.sharpshap.enums.EnumStatusProduct;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
+import java.util.UUID;
+
+@Repository
+public interface StatusProductRepository extends JpaRepository<EnumStatusProduct , UUID> {
+    Optional<EnumStatusProduct> findByStatus(String status);
+}

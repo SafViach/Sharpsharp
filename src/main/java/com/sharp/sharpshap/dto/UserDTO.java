@@ -11,7 +11,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class DTOUser {
+public class UserDTO {
     @NotBlank(message = "Логин работника не может быть пустым")
     @Size(min = 2 , max = 50 , message = "Логин работника должно быть от 2-х до 50-ти символов")
     private String login;

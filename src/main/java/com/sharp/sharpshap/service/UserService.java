@@ -1,6 +1,6 @@
 package com.sharp.sharpshap.service;
 
-import com.sharp.sharpshap.dto.DTOUser;
+import com.sharp.sharpshap.dto.UserDTO;
 import com.sharp.sharpshap.enums.EnumRole;
 import com.sharp.sharpshap.exceptions.UserException;
 import com.sharp.sharpshap.entity.User;
@@ -28,7 +28,7 @@ public class UserService {
         this.roleService = roleService;
     }
 
-    public User registerUser(DTOUser dtoUser) {
+    public User registerUser(UserDTO dtoUser) {
         if (userRepository.findByLogin(dtoUser.getLogin()).isPresent()){
             throw new UserException("Пользователь с логином "+dtoUser.getLogin() + " уже существует");
         }

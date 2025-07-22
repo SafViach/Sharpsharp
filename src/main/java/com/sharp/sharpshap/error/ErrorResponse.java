@@ -6,21 +6,18 @@ import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDateTime;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@Value
 public class ErrorResponse {
-    private String message;
-    private int status;
-    private String timestamp;
+    private final String message;
+    private final int status;
+    private final String timestamp;
 
-    public static ResponseEntity<Object> error(RuntimeException e){
+    public static ResponseEntity<Object> error(RuntimeException e , HttpStatus status){
         ErrorResponse error = new ErrorResponse(
                 e.getMessage(),
-                HttpStatus.NOT_FOUND.value(),
+                status.value(),
                 LocalDateTime.now().toString()
         );
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        return ResponseEntity.status(status).body(error);
     }
 }

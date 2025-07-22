@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
+
 @Service
 public class TradePointService {
     private TradePointRepository tradePointRepository;
@@ -35,7 +37,7 @@ public class TradePointService {
 
     public TradePoint updateTradePoint(int id , TradePoint updateTradePoint){
         TradePoint oldTradePoint = tradePointRepository.findById(id)
-            .orElseThrow(()-> new RuntimeException("Такой точки с id = "+ id +" не найден"));
+            .orElseThrow(()-> new TradePointNotFoundException("Такой точки с id = "+ id +" не найден"));
         oldTradePoint.setName(updateTradePoint.getName());
         oldTradePoint.setAddress(updateTradePoint.getAddress());
         oldTradePoint.setMoneyInTheCashRegister(updateTradePoint.getMoneyInTheCashRegister());

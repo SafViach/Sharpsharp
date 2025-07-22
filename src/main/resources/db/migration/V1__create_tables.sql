@@ -42,6 +42,12 @@ CREATE TABLE "user" (
     enable BOOLEAN NOT NULL DEFAULT TRUE,
     account_non_locked BOOLEAN NOT NULL DEFAULT TRUE
 );
+CREATE TABLE refresh_token (
+    id UUID PRIMARY KEY,
+    token VARCHAR(255) NOT NULL UNIQUE,
+    user_id UUID NOT NULL REFERENCES "user"(id),
+    expiry_date TIMESTAMP
+);
 CREATE TABLE user_role (
     user_id UUID NOT NULL REFERENCES "user"(id),
     role_id UUID NOT NULL REFERENCES enum_role(id),
