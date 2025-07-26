@@ -85,12 +85,6 @@ public class GlobalExceptionHandler {
         logger.error("GlobalExceptionHandler: ---UsernameNotFoundException Неверный логин" );
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Неверный логин");
     }
-    @ExceptionHandler(ExpiredJwtException.class)
-    public ResponseEntity<String> expiredJwtException(ExpiredJwtException exception){
-        logger.error("GlobalExceptionHandler: ---JWT токен истёк");
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("JWT токен истёк");
-    }
-
     private ResponseEntity<String> error(Exception e, HttpStatus status) {
         ErrorResponse error = new ErrorResponse(
                 e.getMessage(),

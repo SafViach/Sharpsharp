@@ -29,7 +29,7 @@ public class AuthService {
     private final TradePointService tradePointService;
     public static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
-    public AuthResponseDTO authenticateUserLoad(AuthRequestDTO requestDTO) {
+    public String authenticateUserLoad(AuthRequestDTO requestDTO) {
         logger.info("AuthService: authenticateUserLoad requestDTO.getPassword()-> " + requestDTO.getPassword());
         logger.info("AuthService: authenticateUserLoad requestDTO.getLogin()-> " + requestDTO.getLogin());
 
@@ -46,15 +46,13 @@ public class AuthService {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        logger.info("AuthService: authenticateUserLoad Authentication генерируем AccessToken");
-        String accessToken = jwtService.generateAccessToken(user.getId());
 
         logger.info("AuthService: authenticateUserLoad ---Генерируем и сохраняем в БД RefreshToken");
         refreshTokenService.generateRefreshToken(user.getId());
 
-        AuthResponseDTO responseDTO = new AuthResponseDTO(tradePointService.getAllTradePoints(),accessToken ,
-                "AccessToken предоставлен");
-        return responseDTO;
+        logger.info("AuthService: authenticateUserLoad Authentication генерируем AccessToken");
+        return jwtService.generateAccessToken(user.getId());
+
     }
 
     public AuthAccessTokenResponseDTO refresh(UserDetails userDetails){
@@ -70,6 +68,7 @@ public class AuthService {
         boolean isValid = jwtService.isRefreshTokenValid(refreshTokenEntity.getToken(), user.getId());
         if (!isValid){
             throw new RuntimeException("AuthController:  refresh ---RefreshТокен не валиден");
+
         }
         logger.info("AuthService:  refresh ---результат:" + isValid);
 
@@ -78,7 +77,7 @@ public class AuthService {
         logger.info("AuthService:  refresh ---Проверка нового токена на ASCII:" + isASCII(newAccessToken));
 
         AuthAccessTokenResponseDTO authAccessTokenResponseDTO
-                = new AuthAccessTokenResponseDTO("Токен обновслён" , newAccessToken);
+                = new AuthAccessTokenResponseDTO( newAccessToken);
         return authAccessTokenResponseDTO;
     }
 

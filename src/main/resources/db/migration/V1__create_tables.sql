@@ -32,6 +32,19 @@ CREATE TABLE enum_role (
     id UUID PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE
 );
+
+CREATE TABLE trade_point (
+    id UUID PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    address VARCHAR(255),
+    money_in_box DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    money_in_the_cash_register DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    sum_finish_off_the_money DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    total_life_and_laptop DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    total_life DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    total_laptop DECIMAL(10, 2) NOT NULL DEFAULT 0.00
+);
+
 CREATE TABLE "user" (
     id UUID PRIMARY KEY,
     login VARCHAR(50) NOT NULL UNIQUE,
@@ -40,7 +53,11 @@ CREATE TABLE "user" (
     salary DOUBLE NOT NULL,
     password VARCHAR(255) NOT NULL,
     enable BOOLEAN NOT NULL DEFAULT TRUE,
-    account_non_locked BOOLEAN NOT NULL DEFAULT TRUE
+    account_non_locked BOOLEAN NOT NULL DEFAULT TRUE,
+    trade_point_id UUID ,
+    CONSTRAINT fk_trade_point FOREIGN KEY (trade_point_id)
+                    REFERENCES trade_point(id)
+                    ON DELETE SET NULL
 );
 CREATE TABLE refresh_token (
     id UUID PRIMARY KEY,
@@ -67,17 +84,6 @@ CREATE TABLE category_subcategory (
 ALTER TABLE category_subcategory
     ADD CONSTRAINT uq_category_subcategory UNIQUE (category_id, subcategory_id);
 
-CREATE TABLE trade_point (
-    id UUID PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
-    address VARCHAR(255),
-    money_in_box DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-    money_in_the_cash_register DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-    sum_finish_off_the_money DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-    total_life_and_laptop DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-    total_life DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-    total_laptop DECIMAL(10, 2) NOT NULL DEFAULT 0.00
-);
 CREATE TABLE history_trade_point (
     id UUID PRIMARY KEY,
     date_time_login TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,

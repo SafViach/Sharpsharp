@@ -85,6 +85,10 @@ public class UserService {
         }
         throw new UserException("Пользователь не аутентифицирован");
     }
+    public User getUserByLogin(String login){
+        return userRepository.findByLogin(login).orElseThrow(()->
+                new UsernameNotFoundException("UserService: ---getUserByLogin Пользователь по логину не найден"));
+    }
 
     public User getUser(){
         String login = getCurrentUserName();

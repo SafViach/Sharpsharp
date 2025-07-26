@@ -53,6 +53,9 @@ public class User{
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
     private Set<EnumRole> roles = new HashSet<>();
+    @OneToOne
+    @JoinColumn(name = "trade_point_id")
+    private TradePoint tradePointId;
 
     public User(String login, String password) {
         this.login = login;
