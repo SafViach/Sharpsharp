@@ -18,6 +18,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+import java.util.UUID;
+
 @RequiredArgsConstructor
 @Service
 public class AuthService {
@@ -45,17 +49,26 @@ public class AuthService {
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
+        logger.info("AuthService: authenticateUserLoad ---Проверяем есть ли у пользователя  в БД RefreshToken");
+        UUID uuidUser = user.getId();
+        Optional<RefreshToken> refreshTokenOld = refreshTokenService.getTokenByUuidUser(uuidUser);
 
+        if (refreshTokenOld.isPresent()) {
+            logger.info(refreshTokenOld.isPresent() + "AuthService: authenticateUserLoad ---Токен найден (удаляем и обновляем)");
+            refreshTokenService.deleteRefreshTokenByUserId(uuidUser);
+            logger.info("AuthService: authenticateUserLoad ---Генерируем и сохраняем в БД RefreshToken");
+        }else {
+            logger.info(refreshTokenOld.isPresent() + "AuthService: authenticateUserLoad ---Токен не найден генерируем и сохраняем в бд новый RefreshToken");
+        }
+            refreshTokenService.generateRefreshToken(user.getId());
 
-        logger.info("AuthService: authenticateUserLoad ---Генерируем и сохраняем в БД RefreshToken");
-        refreshTokenService.generateRefreshToken(user.getId());
 
         logger.info("AuthService: authenticateUserLoad Authentication генерируем AccessToken");
         return jwtService.generateAccessToken(user.getId());
 
     }
 
-    public AuthAccessTokenResponseDTO refresh(UserDetails userDetails){
+    public AuthAccessTokenResponseDTO refresh(UserDetails userDetails) {
         logger.info("AuthService:  refresh ---Получаем текущего аутентифицированного пользователя");
         String login = userDetails.getUsername();
         User user = userRepository.findByLogin(login).orElseThrow(() -> new UsernameNotFoundException("" +
@@ -66,7 +79,7 @@ public class AuthService {
 
         logger.info("AuthService:  refresh ---Проверяем на валидность RefreshToken");
         boolean isValid = jwtService.isRefreshTokenValid(refreshTokenEntity.getToken(), user.getId());
-        if (!isValid){
+        if (!isValid) {
             throw new RuntimeException("AuthController:  refresh ---RefreshТокен не валиден");
 
         }
@@ -77,12 +90,12 @@ public class AuthService {
         logger.info("AuthService:  refresh ---Проверка нового токена на ASCII:" + isASCII(newAccessToken));
 
         AuthAccessTokenResponseDTO authAccessTokenResponseDTO
-                = new AuthAccessTokenResponseDTO( newAccessToken);
+                = new AuthAccessTokenResponseDTO(newAccessToken);
         return authAccessTokenResponseDTO;
     }
 
-    private boolean isASCII (String accessToken){
-        if (!accessToken.chars().allMatch(c -> c < 128)){
+    private boolean isASCII(String accessToken) {
+        if (!accessToken.chars().allMatch(c -> c < 128)) {
             throw new IllegalArgumentException("AccessToken содержит не ASCII симводы");
         }
         return true;

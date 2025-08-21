@@ -2,6 +2,7 @@ package com.sharp.sharpshap.service;
 
 import com.sharp.sharpshap.entity.RefreshToken;
 import com.sharp.sharpshap.entity.User;
+import com.sharp.sharpshap.exceptions.RefreshTokenNotFound;
 import com.sharp.sharpshap.repository.RefreshTokenRepository;
 import com.sharp.sharpshap.repository.UserRepository;
 import jakarta.transaction.Transactional;
@@ -12,6 +13,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -19,13 +21,14 @@ import java.util.UUID;
 public class RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
+    private final UserService userService;
     private final JwtService jwtService;
     private final Logger logger = LoggerFactory.getLogger(RefreshTokenService.class);
 
     @Transactional
-    public String generateRefreshToken(UUID userUuid) {
+    public String generateRefreshToken(UUID uuidUser) {
         logger.info("RefreshTokenService: ---generateRefreshToken");
-        User user = userRepository.findById(userUuid).orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        User user = userService.getUserById(uuidUser);
         RefreshToken refreshTokenEntity = new RefreshToken();
 
         String refreshToken = jwtService.generateRefreshToken(user.getId());
@@ -65,5 +68,9 @@ public class RefreshTokenService {
     public void deleteRefreshTokenByUserId(UUID uuidUser) {
         logger.info("RefreshTokenService: ---deleteRefreshTokenByUserId");
         refreshTokenRepository.deleteByUserId(uuidUser);
+    }
+    public Optional<RefreshToken> getTokenByUuidUser(UUID uuidUser){
+        logger.info("RefreshTokenService: ---getTokenByUuidUser");
+        return refreshTokenRepository.findByUserId(uuidUser);
     }
 }

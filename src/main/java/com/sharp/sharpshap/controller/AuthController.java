@@ -82,13 +82,31 @@ public class AuthController {
         refreshTokenService.deleteRefreshTokenByUserId(user.getId());
 
         logger.info("AuthController: /logout  ---Очищаем AccessToken из HttpOnly cookie");
-        ResponseCookie cookie = ResponseCookie.from("access_token", "")
+        ResponseCookie cookieAccessToken = ResponseCookie.from("access_token", "")
                 .httpOnly(true)
                 .secure(true)
                 .path("/")
                 .maxAge(0) // удаляет куку
                 .build();
+        logger.info("AuthController: /logout  ---Очищаем uuidCategory из cookie");
+        ResponseCookie cookieUuidCategory = ResponseCookie.from("uuidCategory", "")
+                .httpOnly(false)
+                .secure(true)
+                .path("/")
+                .maxAge(0) // удаляет куку
+                .build();
+        logger.info("AuthController: /logout  ---Очищаем uuidTradePoint из cookie");
+        ResponseCookie cookieUuidTradePoint = ResponseCookie.from("uuidTradePoint", "")
+                .httpOnly(false)
+                .secure(true)
+                .path("/")
+                .maxAge(0) // удаляет куку
+                .build();
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookieAccessToken.toString())
+                .header(HttpHeaders.SET_COOKIE, cookieUuidCategory.toString())
+                .header(HttpHeaders.SET_COOKIE, cookieUuidTradePoint.toString())
+                .build();
     }
 }

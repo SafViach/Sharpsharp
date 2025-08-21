@@ -4,6 +4,7 @@ import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Data
 public class ProductCreateDTO {
@@ -12,22 +13,21 @@ public class ProductCreateDTO {
     private String model;
     private String characteristics;
 
-    @Min(value = 1 , message = "товар принимается от единицы")
+    @Min(value = 1, message = "товар принимается от единицы")
     private int quantity;
-
-//    @NotBlank(message = "Выберите курс по которому прибыл товар")
-//    private EnumCurrency currency;
 
     @NotNull(message = "введите цену с НДС")
     @Min(value = 1, message = "цена должны быть не ниже 0.1")
     private BigDecimal priceWithVat;
+    private UUID currencyId;
+    private BigDecimal priceSelling;
+    @NotNull(message = "введите курс по которому высчитывать цену товара")
+    private BigDecimal rateCurrency;
 
-    //private CategorySubcategory categorySubcategory;
-
-    @AssertTrue(message = "Хотя бы одно поле (brand, model или characteristics) должно быть заполнено ")
-    public boolean isValid(){
+    @AssertTrue(message = "Хотя бы одно поле (Брэнд, Модель или Характеристики) должно быть заполнено ")
+    public boolean isValid() {
         return brand != null && !brand.isEmpty() ||
-                model !=null && !model.isEmpty() ||
+                model != null && !model.isEmpty() ||
                 characteristics != null && !characteristics.isEmpty();
     }
 }

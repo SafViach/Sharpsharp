@@ -42,13 +42,13 @@ public class TradePointController {
     @GetMapping("/{uuidTradePoint}")
     public ResponseEntity<ResponseTradePointDTO> getTradePoint(HttpServletRequest request,
                                                     @PathVariable("uuidTradePoint") UUID uuidTradePoint) {
-        logger.info("tradePoints: /select-trade-point  ---настраиваем настройки для uuidTradePoint");
+        logger.info("tradePoints:  ---настраиваем настройки для uuidTradePoint");
         ResponseCookie cookie = ResponseCookie.from("uuidTradePoint", uuidTradePoint.toString())
                 .httpOnly(true)
-                .secure(true) // Только через HTTPS
+                .secure(false)
                 .path("/")
-                .maxAge(JwtService.getAccessExpirationMs()) //время жизни токена в cookie
-                .domain("localhost") // или свой домен
+                .maxAge(JwtService.getRefreshExpirationMs())
+                .domain("localhost")
                 .build();
         UUID uuidUser = (UUID) request.getAttribute("uuidUser");
         ResponseTradePointDTO responseTradePointDTO= tradePointService.setTradePointForUser(uuidUser, uuidTradePoint);

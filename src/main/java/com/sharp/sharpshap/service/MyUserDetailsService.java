@@ -1,4 +1,4 @@
-package com.sharp.sharpshap.config;
+package com.sharp.sharpshap.service;
 
 import com.sharp.sharpshap.entity.User;
 import com.sharp.sharpshap.enums.EnumRole;
@@ -8,7 +8,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

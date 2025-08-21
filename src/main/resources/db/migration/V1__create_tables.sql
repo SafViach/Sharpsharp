@@ -78,7 +78,7 @@ CREATE TABLE subcategory (
 CREATE TABLE category_subcategory (
     id UUID PRIMARY KEY,
     category_id UUID NOT NULL REFERENCES category(id),
-    subcategory_id UUID NOT NULL REFERENCES subcategory(id)
+    subcategory_id UUID REFERENCES subcategory(id)
 );
 -- Уникальность пары
 ALTER TABLE category_subcategory
@@ -122,6 +122,7 @@ CREATE TABLE product (
     user_sale_product_id UUID REFERENCES "user"(id),
     category_subcategory_id UUID NOT NULL REFERENCES category_subcategory(id),
     trade_point_id UUID NOT NULL REFERENCES trade_point(id),
+    sku VARCHAR(128),
     discount_id UUID REFERENCES discount(id)
 );
 CREATE TABLE update_product_history (

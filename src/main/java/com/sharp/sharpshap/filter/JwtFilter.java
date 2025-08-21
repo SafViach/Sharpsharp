@@ -1,6 +1,6 @@
 package com.sharp.sharpshap.filter;
 
-import com.sharp.sharpshap.config.MyUserDetailsService;
+import com.sharp.sharpshap.service.MyUserDetailsService;
 import com.sharp.sharpshap.entity.User;
 import com.sharp.sharpshap.repository.UserRepository;
 import com.sharp.sharpshap.service.JwtService;
@@ -46,11 +46,11 @@ public class JwtFilter extends OncePerRequestFilter {
         logger.info("JwtFilter: ---request.getServletPath()->" + path);
 
 
-        logger.info("JwtFilter: ---if (path.startsWith(h2-console) || path.startsWith(/api/auth/login))->"
-                + path.startsWith("/h2-console") + " " + path.startsWith("/api/auth/login"));
+        logger.info(" if (path.startsWith(\"/h2-console\") || path.startsWith(\"/api/auth/login\") || path.startsWith(\"/favicon.ico\"))->"
+                + path.startsWith("/h2-console") + " " + path.startsWith("/api/auth/login") + " " + path.startsWith("/favicon.ico"));
 
         // Пропускаем определённые пути без проверки токена
-        if (path.startsWith("/h2-console") || path.startsWith("/api/auth/login")) {
+        if (path.startsWith("/h2-console") || path.startsWith("/api/auth/login") || path.startsWith("/favicon.ico")) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -85,7 +85,7 @@ public class JwtFilter extends OncePerRequestFilter {
                     }
                 }
 
-                logger.info("JwtFilter: ---Загрущаем пользователя .loadUserByUsername(user.getLogin());");
+                logger.info("JwtFilter: ---Загружаем пользователя .loadUserByUsername(user.getLogin());");
                 UserDetails userDetails = myUserDetailsService.loadUserByUsername(user.getLogin());
 
                 logger.info("JwtFilter: ---Создаём Authentication");

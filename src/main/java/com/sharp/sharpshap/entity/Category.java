@@ -1,5 +1,7 @@
 package com.sharp.sharpshap.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,6 +24,7 @@ public class Category {
     private BigDecimal coefficientSale = BigDecimal.ZERO;
 
     @OneToMany(mappedBy = "category")
+    @JsonBackReference
     private List<CategorySubcategory> categorySubcategories;
 
 }

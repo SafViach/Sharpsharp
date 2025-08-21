@@ -4,70 +4,153 @@ import com.sharp.sharpshap.dto.ProductCreateDTO;
 import com.sharp.sharpshap.entity.*;
 import com.sharp.sharpshap.enums.EnumCurrency;
 import com.sharp.sharpshap.enums.EnumStatusProduct;
-import com.sharp.sharpshap.enums.StatusProduct;
-import com.sharp.sharpshap.mappers.ProductMapper;
+
+import java.time.LocalDateTime;
+
 import com.sharp.sharpshap.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.Optional;
+import java.math.*;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class ProductService {
+    private final CategorySubcategoryService categorySubcategoryService;
+    private final DiscountService discountService;
+    private final StatusProductService statusProductService;
+    private final UserService userService;
+    private final SubcategoryService subcategoryService;
+    private final CategoryService categoryService;
     private final ProductRepository productRepository;
-    private final ProductMapper productMapper;
-    private final StatusProductRepository statusProductRepository;
-    private final TradePointRepository tradePointRepository;
-    private final CategoryRepository categoryRepository;
-    private final SubcategoryRepository subcategoryRepository;
-    private final CategorySubcategoryRepository categorySubcategoryRepository;
-    private final UserRepository userRepository;
-    private final CurrencyRepository currencyRepository;
+    private final TradePointService tradePointService;
+    private final CurrencyService currencyService;
+    private final static Logger logger = LoggerFactory.getLogger(ProductService.class);
 
     @Transactional
-    public Product createdProduct(ProductCreateDTO productCreateDTO, UUID categoryUUID,
-                                  UUID subcategoryUUID, UUID currencyUUID) {
+    public void createdProduct(ProductCreateDTO productCreateDTO, UUID uuidCategory,
+                               UUID uuidSubcategory, UUID uuidUser, UUID uuidTradePoint) {
+        logger.info("ProductService: ---createdProduct добавление продукта");
+        Product product = new Product();
 
-        Product product = productMapper.toEntity(productCreateDTO);
+        logger.info("ProductService: ---createdProduct discountService.getByAmountDiscount(BigDecimal.ZERO);");
+        Discount discount = discountService.getByAmountDiscount(BigDecimal.ZERO);
 
-        EnumStatusProduct statusProduct = statusProductRepository.findByStatus("EXAMINATION").get();
-        System.out.println(statusProduct);
-        TradePoint tradePoint = tradePointRepository.findByName("Хатаевича").get();
-        System.out.println(tradePoint);
-        Category category = categoryRepository.findById(categoryUUID).get();
-        System.out.println(category);
-        Subcategory subcategory = subcategoryRepository.findById(subcategoryUUID).get();
-        System.out.println(subcategory);
+        logger.info("ProductService: ---createdProduct categoryService.getCategoryById(categoryUUID);");
+        Category category = categoryService.getCategoryById(uuidCategory);
 
-        CategorySubcategory catSub = new CategorySubcategory();
-        catSub.setCategory(category);
-        catSub.setSubcategory(subcategory);
-        System.out.println(catSub);
-        categorySubcategoryRepository.save(catSub);
+        Subcategory subcategory = null;
 
-        CategorySubcategory categorySubcategory = categorySubcategoryRepository.
-                findByCategoryIdAndSubcategoryId(categoryUUID, subcategoryUUID).get();
-        System.out.println(catSub);
-        EnumCurrency currency = currencyRepository.findById(currencyUUID).get();
-        User user = userRepository.findByFirstName("Slava").get();
-        System.out.println(user);
-        BigDecimal two = new BigDecimal(2);
+        if (uuidSubcategory != null) {
+            logger.info("ProductService: ---createdProduct subcategoryService.getSubcategoryByUuid(uuidSubcategory);");
+            subcategory = subcategoryService.getSubcategoryByUuid(uuidSubcategory);
+        }
 
+
+        logger.info("ProductService: ---createdProduct userService.getUserById(uuidUser);");
+        User user = userService.getUserById(uuidUser);
+
+        logger.info("ProductService: ---createdProduct currencyService.getById(productCreateDTO.getCurrencyId());");
+        EnumCurrency currency = currencyService.getById(productCreateDTO.getCurrencyId());
+
+        logger.info("ProductService: ---createdProduct tradePointService.getByIdTradePoint(uuidTradePoint);");
+        TradePoint tradePoint = tradePointService.getByIdTradePoint(uuidTradePoint);
+
+        logger.info("ProductService: ---createdProduct statusProductService.findByName(\"EXAMINATION\");");
+        EnumStatusProduct statusProduct = statusProductService.findByName("EXAMINATION");
+
+        CategorySubcategory categorySubcategory = new CategorySubcategory();
+
+        logger.info("ProductService: ---createdProduct .setBrand(productCreateDTO.getBrand());");
+        product.setBrand(productCreateDTO.getBrand());
+
+        logger.info("ProductService: ---createdProduct .setModel(productCreateDTO.getModel());");
+        product.setModel(productCreateDTO.getModel());
+
+        logger.info("ProductService: ---createdProduct .setCharacteristics(productCreateDTO.getCharacteristics());");
+        product.setCharacteristics(productCreateDTO.getCharacteristics());
+
+        logger.info("ProductService: ---createdProduct .setQuantity(productCreateDTO.getQuantity());");
+        product.setQuantity(productCreateDTO.getQuantity());
+
+        logger.info("ProductService: ---createdProduct .setCurrency(currency);");
         product.setCurrency(currency);
+
+        logger.info("ProductService: ---createdProduct .setPriceWithVat(productCreateDTO.getPriceWithVat());");
+        product.setPriceWithVat(productCreateDTO.getPriceWithVat());
+
+        logger.info("ProductService: ---createdProduct .setPriceSelling(productCreateDTO.getPriceSelling());");
+        product.setPriceSelling(productCreateDTO.getPriceSelling());
+
+        logger.info("ProductService: ---createdProduct .setStatusProduct(statusProduct);");
         product.setStatusProduct(statusProduct);
-        product.setTradePoint(tradePoint);
-        product.setCategorySubcategory(categorySubcategory);
+
+        logger.info("ProductService: ---createdProduct .setDateOfArrival(LocalDateTime.now());");
         product.setDateOfArrival(LocalDateTime.now());
+
+        logger.info("ProductService: ---createdProduct .setUserAcceptedProduct(user);");
         product.setUserAcceptedProduct(user);
-        product.setPriceSelling(product.getPriceWithVat().multiply(two));
-        return productRepository.save(product);
+
+        logger.info("ProductService: ---createdProduct .setTradePoint(tradePoint);");
+        product.setTradePoint(tradePoint);
+
+        logger.info("ProductService: ---createdProduct .setDiscount(discount);");
+        product.setDiscount(discount);
 
 
+        try {
+            logger.info("ProductService: ---createdProduct categorySubcategory = categorySubcategoryService.getByCategoryAndSubcategory(category, subcategory);");
+            categorySubcategory = categorySubcategoryService.getByCategoryAndSubcategory(category, subcategory);
+        } catch (IncorrectResultSizeDataAccessException e) {
+            logger.error("в categorySubcategory содержится боллее одной одинаковой записи");
+        }
+
+
+        logger.info("ProductService: ---createdProduct .setCategorySubcategory(categorySubcategory);");
+        product.setCategorySubcategory(categorySubcategory);
+
+        product.setSku(generationFieldSku(
+                productCreateDTO.getBrand(),
+                productCreateDTO.getModel(),
+                productCreateDTO.getCharacteristics()));
+
+        logger.info("ProductService: ---createdProduct return productRepository.save(product);");
+
+       // calcTheSaleProduct();
+        productRepository.save(product);
+    }
+
+    public BigDecimal calcTheSaleProduct(ProductCreateDTO productCreateDTO ,Category category , Subcategory subcategory){
+        BigDecimal rateCurrency = productCreateDTO.getRateCurrency();
+        BigDecimal priceWithVat = productCreateDTO.getPriceWithVat();
+
+        BigDecimal sumPriceProductNotCoefficient = rateCurrency.multiply(priceWithVat);
+        BigDecimal sumPriceProduct;
+
+        if(subcategory != null){
+            BigDecimal coeff = subcategory.getCoefficientSales();
+            sumPriceProduct = coeff.multiply(sumPriceProductNotCoefficient);
+        }else{
+            BigDecimal coeff = category.getCoefficientSale();
+            sumPriceProduct = coeff.multiply(sumPriceProductNotCoefficient);
+
+        }
+        return sumPriceProduct;
+    }
+    public static BigDecimal toDot90(BigDecimal price) {
+        // Округляем до целого вниз (берём целую часть)
+        BigDecimal wholePart = price.setScale(0, RoundingMode
+        );//RoundingMode.FLOOR);
+        // Добавляем 0.90
+        return wholePart.add(new BigDecimal("0.90"));
+    }
+
+    public String generationFieldSku(String brand, String model, String characteristics) {
+        return String.join("-", brand, model, characteristics).toUpperCase();
     }
 }

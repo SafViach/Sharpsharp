@@ -10,7 +10,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Data
+@Setter
+@Getter
 public class Product {
 
     @Id
@@ -49,13 +50,15 @@ public class Product {
     @JoinColumn(name = "user_sale_product_id")
     private User userSaleProduct;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REFRESH)
     @JoinColumn(name = "category_subcategory_id" , nullable = false)
     private CategorySubcategory categorySubcategory;
 
     @ManyToOne
     @JoinColumn(name = "trade_point_id", nullable = false)
     private TradePoint tradePoint;
+
+    private String sku;
 
     @ManyToOne
     @JoinColumn(name = "discount_id")

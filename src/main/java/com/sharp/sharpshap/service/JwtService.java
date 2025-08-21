@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
+import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
@@ -23,74 +25,87 @@ public class JwtService {
     private final String JWT_SECRET_REFRESH_KEY = System.getenv("JWT_SECRET_REFRESH_KEY");
     private final Logger logger = LoggerFactory.getLogger(JwtService.class);
 
-    private Key getAccessSigningKey() {
+    private SecretKey getAccessSigningKey() {
         logger.info("JwtService: ---getAccessSigningKey Получение секретного ключа AccessToken");
         return Keys.hmacShaKeyFor(JWT_SECRET_ACCESS_KEY.getBytes(StandardCharsets.UTF_8));
     }
 
-    private Key getRefreshSigningKey() {
+    private SecretKey getRefreshSigningKey() {
         logger.info("JwtService: ---getRefreshSigningKey Получение секретного ключа RefreshToken");
         return Keys.hmacShaKeyFor(JWT_SECRET_REFRESH_KEY.getBytes(StandardCharsets.UTF_8));
     }
 
-    private boolean isTokenExpired(String token, Key key) {
+    private boolean isTokenExpired(String token, SecretKey key) {
         logger.info("JwtService: ---isTokenExpired Проверка токена на истечения срока");
-        Date expiration = Jwts.parserBuilder()
-                .setSigningKey(key)
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getExpiration();
-        return expiration.before(new Date());
+        try {
+            Date expiration = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload()
+                    .getExpiration();
+            return expiration.before(new Date());
+        } catch (ExpiredJwtException e) {
+            return true; // токен уже просрочен
+        } catch (JwtException e) {
+            logger.warn("Ошибка при проверке срока действия токена: {}", e.getMessage());
+            throw new IllegalArgumentException("Invalid JWT token", e);
+        }
     }
 
     public String generateAccessToken(UUID userId) {
         logger.info("JwtService: ---generateAccessToken Генерируем AccessToken");
         return Jwts.builder()
-                .setSubject(userId.toString())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + ACCESS_EXPIRATION_MS))//15 min
-                .signWith(getAccessSigningKey(), SignatureAlgorithm.HS256)
+                .subject(userId.toString())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + ACCESS_EXPIRATION_MS))//15 min
+                .signWith(getAccessSigningKey(), Jwts.SIG.HS256)
                 .compact();
     }
 
     public String generateRefreshToken(UUID userId) {
         logger.info("JwtService: ---generateRefreshToken Генерируем RefreshToken");
         return Jwts.builder()
-                .setSubject(userId.toString())
-                .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + REFRESH_EXPIRATION_MS))//7 days
-                .signWith(getRefreshSigningKey(), SignatureAlgorithm.HS256)
+                .subject(userId.toString())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + REFRESH_EXPIRATION_MS))//7 days
+                .signWith(getRefreshSigningKey(), Jwts.SIG.HS256)
                 .compact();
     }
 
     public UUID getUuidFromAccessToken(String token) {
         logger.info("JwtService: ---getUuidFromAccessToken Получение uuidUser из AccessToken");
-        String uuid = Jwts.parserBuilder()
-                .setSigningKey(getAccessSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
-        return UUID.fromString(uuid);
+
+        try {
+            Jws<Claims> jws = Jwts.parser()
+                    .verifyWith(getAccessSigningKey())
+                    .build()
+                    .parseSignedClaims(token);
+
+            String uuid = jws.getPayload().getSubject();
+            return UUID.fromString(uuid);
+
+        } catch (JwtException e) {
+            logger.warn("Ошибка при проверке срока действия токена: {}", e.getMessage());
+            throw new IllegalArgumentException("Invalid JWT token", e);
+        }
     }
 
     public UUID getUuidWithoutExpirationDateCheckFromAccessToken(String token) throws MalformedJwtException
             , IllegalArgumentException {
         try {
-            Jws<Claims> claimsJws = Jwts.parserBuilder()
-                    .setSigningKey(getAccessSigningKey())
+            Jws<Claims> jws = Jwts.parser()
+                    .verifyWith(getAccessSigningKey())
                     .build()
-                    .parseClaimsJws(token);
-            return UUID.fromString(claimsJws.getBody().getSubject());
+                    .parseSignedClaims(token);
+            return UUID.fromString(jws.getPayload().getSubject());
 
         } catch (ExpiredJwtException e) {
-            // ⭐ Ключевой момент: перехватываем expired, но достаём subject
             logger.warn("Токен просрочен, но подпись верна — извлекаем UUID");
             return UUID.fromString(e.getClaims().getSubject());
         } catch (MalformedJwtException | SignatureException e) {
             logger.error("Подпись невалидна", e);
-            throw e; // пробрасываем дальше
+            throw e;
         } catch (IllegalArgumentException e) {
             logger.error("Некорректный аргумент", e);
             throw e;
@@ -99,19 +114,29 @@ public class JwtService {
 
     public UUID getUuidFromRefreshToken(String token) {
         logger.info("JwtService: ---getUuidFromRefreshToken Получение uuidUser из RefreshToken");
-        String uuid = Jwts.parserBuilder()
-                .setSigningKey(getRefreshSigningKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
-        return UUID.fromString(uuid);
+        try {
+            Jws<Claims> jws = Jwts.parser()
+                    .verifyWith(getRefreshSigningKey())
+                    .build()
+                    .parseSignedClaims(token);
+            return UUID.fromString(jws.getPayload().getSubject());
+        } catch (ExpiredJwtException e) {
+            logger.warn("Refresh token expired", e);
+            throw new IllegalArgumentException("Refresh token expired", e);
+        } catch (JwtException e) {
+            logger.warn("Invalid refresh token: {}", e.getMessage());
+            throw new IllegalArgumentException("Invalid refresh token", e);
+        }
     }
 
     public boolean isAccessTokenValid(String token, UUID userId) throws IllegalArgumentException, JwtException {
         logger.info("JwtService: ---isAccessTokenValid Проверка валидании AccessToken");
-        UUID actualId = getUuidFromAccessToken(token);
-        return actualId.equals(userId) && !isTokenExpired(token, getAccessSigningKey());
+        try {
+            UUID actualId = getUuidFromAccessToken(token);
+            return actualId.equals(userId) && !isTokenExpired(token, getAccessSigningKey());
+        } catch (Exception e) {
+            return false;
+        }
 
     }
 

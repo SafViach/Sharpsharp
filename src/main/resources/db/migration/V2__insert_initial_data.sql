@@ -75,3 +75,47 @@ INSERT INTO subcategory (id, name) VALUES
     (RANDOM_UUID(), 'Смартфоны'),
     (RANDOM_UUID(), 'Глянцевые'),
     (RANDOM_UUID(), 'Матовые');
+
+INSERT INTO discount (id , discount_amount) VALUES
+    (RANDOM_UUID(), 0),
+    (RANDOM_UUID(), 5),
+    (RANDOM_UUID(), 10),
+    (RANDOM_UUID(), 15),
+    (RANDOM_UUID(), 20),
+    (RANDOM_UUID(), 25),
+    (RANDOM_UUID(), 30),
+    (RANDOM_UUID(), 35),
+    (RANDOM_UUID(), 40),
+    (RANDOM_UUID(), 45),
+    (RANDOM_UUID(), 50),
+    (RANDOM_UUID(), 55),
+    (RANDOM_UUID(), 60),
+    (RANDOM_UUID(), 65),
+    (RANDOM_UUID(), 70),
+    (RANDOM_UUID(), 75),
+    (RANDOM_UUID(), 80),
+    (RANDOM_UUID(), 85),
+    (RANDOM_UUID(), 90),
+    (RANDOM_UUID(), 95),
+    (RANDOM_UUID(), 100);
+
+SET @subcategory_buttons_id = (SELECT id FROM subcategory WHERE name = 'Кнопки');
+SET @subcategory_smartphones_id = (SELECT id FROM subcategory WHERE name = 'Смартфоны');
+SET @subcategory_glossy_id = (SELECT id FROM subcategory WHERE name = 'Глянцевые');
+SET @subcategory_matte_id = (SELECT id FROM subcategory WHERE name = 'Матовые');
+
+SET @category_phone_id = (SELECT id FROM category WHERE name = 'Телефоны');
+SET @category_films_id = (SELECT id FROM category WHERE name = 'Плёнки');
+SET @category_rugs_id = (SELECT id FROM category WHERE name ='Коврики для мыши');
+
+INSERT INTO category_subcategory (id, category_id, subcategory_id) VALUES
+    (RANDOM_UUID(), @category_phone_id, @subcategory_buttons_id),
+    (RANDOM_UUID(), @category_phone_id, @subcategory_smartphones_id),
+    (RANDOM_UUID(), @category_films_id, @subcategory_glossy_id),
+    (RANDOM_UUID(), @category_films_id, @subcategory_matte_id),
+    (RANDOM_UUID(), @category_rugs_id, null);
+
+-- INSERT INTO  enum_currency (id, description, rate, last_update) VALUES
+--     (RANDOM_UUID(), 'BYN', 1, null);
+
+

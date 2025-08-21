@@ -27,12 +27,12 @@ import java.util.UUID;
 @Entity
 @Table(name = "\"user\"")
 
-public class User{
+public class User {
     @Id
     @GeneratedValue
     private UUID id;
     @NotBlank(message = "Имя работника не может быть пустым")
-    @Size(min = 2 , max = 50 , message = "Имя работника должно быть от 2-х до 50-ти символов")
+    @Size(min = 2, max = 50, message = "Имя работника должно быть от 2-х до 50-ти символов")
     @Column(unique = true)
     private String login;
     @Column(name = "first_name")
@@ -41,7 +41,7 @@ public class User{
     private String lastName;
     private double salary;
     @NotBlank(message = "Пароль работника не может быть пустым")
-    private String password;   
+    private String password;
     @Column(nullable = false)
     private boolean enable;
     @Column(name = "account_non_locked", nullable = false)
