@@ -1,15 +1,15 @@
 package com.sharp.sharpshap.dto;
 
 import jakarta.persistence.Column;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Data;
+import org.checkerframework.checker.regex.qual.Regex;
+import org.hibernate.annotations.Parent;
 
 @Data
 public class CategoryCreateDTO {
-    @Size(min = 2 , max = 15, message = "Наименование категории далжно состояти от 2-ч символов до 15-ти")
+    @Size(min = 3 , max = 15, message = "Наименование категории далжно состоять от 3-x символов до 15-ти")
     @NotBlank(message = "Наименование категории не может быть пустым")
+    @Pattern(regexp = "^[a-zA-Zа-яА-ЯёЁ\s]+$", message = "Допустимы только русские и английские буквы так же пробелы (^[a-zA-Zа-яА-ЯёЁ\s]+$)")
     private String name;
 }

@@ -17,7 +17,7 @@ public class ProductCreateDTO {
     private int quantity;
 
     @NotNull(message = "введите цену с НДС")
-    @Min(value = 1, message = "цена должны быть не ниже 0.1")
+    @DecimalMin(value = "0.1", message = "цена должны быть не ниже 0.1")
     private BigDecimal priceWithVat;
     private UUID currencyId;
     private BigDecimal priceSelling;

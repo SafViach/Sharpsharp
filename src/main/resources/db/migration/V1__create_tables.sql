@@ -26,7 +26,7 @@ CREATE TABLE payment_transaction_money_location (
 CREATE TABLE category (
     id UUID PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE,
-    coefficient_sale DECIMAL(15, 2) DEFAULT 0.00
+    coefficient_sale DECIMAL(15, 2) DEFAULT 1.00
 );
 CREATE TABLE enum_role (
     id UUID PRIMARY KEY,
@@ -73,7 +73,7 @@ CREATE TABLE user_role (
 CREATE TABLE subcategory (
     id UUID PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
-    coefficient_sales DECIMAL(15, 2) DEFAULT 0.00
+    coefficient_sales DECIMAL(15, 2) DEFAULT 1.00
 );
 CREATE TABLE category_subcategory (
     id UUID PRIMARY KEY,

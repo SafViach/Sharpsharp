@@ -10,7 +10,10 @@ import java.util.UUID;
 
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, UUID> {
+
     List<Category> findByNameStartingWith(String prefix);
 
     Optional<Category> findByName(String name);
+
+    Optional<Category> findByNameIgnoreCase(String name);
 }

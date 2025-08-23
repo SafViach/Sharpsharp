@@ -2,6 +2,7 @@ package com.sharp.sharpshap.repository;
 
 import com.sharp.sharpshap.entity.Category;
 import com.sharp.sharpshap.entity.CategorySubcategory;
+import com.sharp.sharpshap.entity.Product;
 import com.sharp.sharpshap.entity.Subcategory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

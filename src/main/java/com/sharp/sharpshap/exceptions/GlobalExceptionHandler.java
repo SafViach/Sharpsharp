@@ -1,7 +1,6 @@
 package com.sharp.sharpshap.exceptions;
 
 import com.sharp.sharpshap.error.ErrorResponse;
-import io.jsonwebtoken.ExpiredJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -77,13 +76,13 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<String> passwordIncorrect(BadCredentialsException exception){
-        logger.info("GlobalExceptionHandler: passwordIncorrect(BadCredentialsException)  ~~~Неверный пароль");
+        logger.error("GlobalExceptionHandler: passwordIncorrect(BadCredentialsException)  ~~~Неверный пароль");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Неверный пароль");
     }
     @ExceptionHandler(UsernameNotFoundException.class)
     public ResponseEntity<String> userNotFound(UsernameNotFoundException exception){
         logger.error("GlobalExceptionHandler: ---UsernameNotFoundException Неверный логин" );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Неверный логин");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
     }
     private ResponseEntity<String> error(Exception e, HttpStatus status) {
         ErrorResponse error = new ErrorResponse(
@@ -92,5 +91,14 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now().toString()
         );
         return ResponseEntity.status(status).body(error.getMessage());
+    }
+    @ExceptionHandler(ResourceAlreadyExistsException.class)
+    public ResponseEntity<String>handlerResourceAlreadyExistsException(ResourceAlreadyExistsException exception){
+        logger.error("GlobalExceptionHandler: handlerResourceAlreadyExistsException(ResourceAlreadyExistsException)  ~~~Уже есть в базе");
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(exception.getMessage());
+    }
+    public ResponseEntity<String>errorDelete(DeleteException exception){
+        logger.error("GlobalExceptionHandler: errorDelete(DeleteException  ~~Отмена удаления" + exception.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(exception.getMessage());
     }
 }

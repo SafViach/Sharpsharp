@@ -1,5 +1,6 @@
 package com.sharp.sharpshap.controller;
 
+import com.sharp.sharpshap.dto.CategoryCreateDTO;
 import com.sharp.sharpshap.dto.ProductCreateDTO;
 import com.sharp.sharpshap.dto.ResponseCategoriesDTO;
 import com.sharp.sharpshap.dto.ResponseSubcategoryDTO;
@@ -56,16 +57,16 @@ public class CategoryController {
         return ResponseEntity.ok().body(responseCategoriesDTO);
     }
 
-    @PostMapping
-    public ResponseEntity<Object> createCategory(@Valid @RequestBody Category category,
-                                                 BindingResult result) {
-        if (result.hasErrors()) {
-            String errors = result.getFieldErrors().stream()
-                    .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                    .collect(Collectors.joining(","));
-            return ResponseEntity.badRequest().body("Объект не валиден" + errors);
-        }
-        return ResponseEntity.status(HttpStatus.CREATED).body("");
+    @PostMapping("/createCategory")
+    public ResponseEntity<CategoryCreateDTO> createCategory(@Valid @RequestBody CategoryCreateDTO categoryCreateDTO){
+        CategoryCreateDTO createDTO = categoryService.createCategory(categoryCreateDTO);
+        return ResponseEntity.ok().body(createDTO);
+    }
+
+    @DeleteMapping("/{uuidCategory}")
+    public ResponseEntity deleteCategory(@PathVariable UUID uuidCategory){
+        categoryService.deleteCategory(uuidCategory);
+        return ResponseEntity.ok().build();
 
     }
 }

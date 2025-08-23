@@ -9,5 +9,8 @@ import java.util.UUID;
 
 @Repository
 public interface SubcategoryRepository extends JpaRepository<Subcategory, UUID> {
+
     Optional<Subcategory> findByName(String name);
+
+    Optional<Subcategory> findByNameIgnoreCase(String name);
 }

@@ -7,6 +7,7 @@ import com.sharp.sharpshap.enums.EnumStatusProduct;
 
 import java.time.LocalDateTime;
 
+import com.sharp.sharpshap.exceptions.CategoryNotFoundException;
 import com.sharp.sharpshap.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,7 @@ public class ProductService {
     private final StatusProductService statusProductService;
     private final UserService userService;
     private final SubcategoryService subcategoryService;
-    private final CategoryService categoryService;
+    private final CategoryRepository categoryRepository; //  : (
     private final ProductRepository productRepository;
     private final TradePointService tradePointService;
     private final CurrencyService currencyService;
@@ -42,7 +43,8 @@ public class ProductService {
         Discount discount = discountService.getByAmountDiscount(BigDecimal.ZERO);
 
         logger.info("ProductService: ---createdProduct categoryService.getCategoryById(categoryUUID);");
-        Category category = categoryService.getCategoryById(uuidCategory);
+        Category category = categoryRepository.findById(uuidCategory).orElseThrow(() ->
+                new CategoryNotFoundException("CategoryService: ---getCategoryById Такой категории не найдено"));
 
         Subcategory subcategory = null;
 
@@ -121,7 +123,7 @@ public class ProductService {
 
         logger.info("ProductService: ---createdProduct return productRepository.save(product);");
 
-       // calcTheSaleProduct();
+        product.setPriceSelling(calcTheSaleProduct(productCreateDTO,category,subcategory));
         productRepository.save(product);
     }
 
@@ -140,17 +142,22 @@ public class ProductService {
             sumPriceProduct = coeff.multiply(sumPriceProductNotCoefficient);
 
         }
-        return sumPriceProduct;
+        return toDot90(sumPriceProduct);
     }
-    public static BigDecimal toDot90(BigDecimal price) {
+    public BigDecimal toDot90(BigDecimal price) {
         // Округляем до целого вниз (берём целую часть)
-        BigDecimal wholePart = price.setScale(0, RoundingMode
-        );//RoundingMode.FLOOR);
+        BigDecimal wholePart = price.setScale(0, BigDecimal.ROUND_HALF_UP);//RoundingMode.FLOOR);
         // Добавляем 0.90
         return wholePart.add(new BigDecimal("0.90"));
     }
 
     public String generationFieldSku(String brand, String model, String characteristics) {
         return String.join("-", brand, model, characteristics).toUpperCase();
+    }
+    public boolean checkCategoryForProducts(Category category){
+        return productRepository.existsByCategorySubcategory_Category_Id(category.getId());
+    }
+    public boolean checkSubcategoryForProducts(Subcategory subcategory){
+        return productRepository.existsByCategorySubcategory_Subcategory_Id(subcategory.getId());
     }
 }
