@@ -83,4 +83,10 @@ public class UpdateProductHistory {
     @ManyToOne
     @JoinColumn(nullable = false)
     private TradePoint newTradePoint;
+
+    @Column(nullable = false)
+    private String oldSku;
+
+    @Column(nullable = false)
+    private String newSku;
 }

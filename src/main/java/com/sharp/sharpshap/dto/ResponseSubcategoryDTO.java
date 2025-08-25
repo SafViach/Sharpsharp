@@ -16,7 +16,4 @@ public class ResponseSubcategoryDTO {
     public static ResponseSubcategoryDTO to (Subcategory sub){
         return new ResponseSubcategoryDTO(sub.getId() , sub.getName());
     }
-    public static Subcategory from(ResponseSubcategoryDTO subcategoryDTO){
-        return new Subcategory(subcategoryDTO.getUuid(),subcategoryDTO.getName(), BigDecimal.ZERO , null);
-    }
 }

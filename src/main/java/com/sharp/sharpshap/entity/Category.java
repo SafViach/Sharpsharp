@@ -1,7 +1,6 @@
 package com.sharp.sharpshap.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,8 +19,11 @@ public class Category {
     @Column(nullable = false , length = 50 , unique = true)
     private String name;
 
-    @Column(name = "coefficient_sale",precision = 15, scale = 2)
-    private BigDecimal coefficientSale = BigDecimal.ZERO;
+    @Column(name = "percentage_of_sale",precision = 3)
+    private BigDecimal percentageOfSale = new BigDecimal("3");
+
+    @Column(name = "margin_percentage",precision = 4 , scale = 2)
+    private BigDecimal marginPercentage = new BigDecimal("1.00");
 
     @OneToMany(mappedBy = "category")
     @JsonBackReference

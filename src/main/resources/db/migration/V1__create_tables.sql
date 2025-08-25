@@ -26,7 +26,8 @@ CREATE TABLE payment_transaction_money_location (
 CREATE TABLE category (
     id UUID PRIMARY KEY,
     name VARCHAR(50) NOT NULL UNIQUE,
-    coefficient_sale DECIMAL(15, 2) DEFAULT 1.00
+    percentage_of_sale DECIMAL(3) NOT NULL DEFAULT 3,
+    margin_percentage DECIMAL(4,2) NOT NULL DEFAULT 1.00
 );
 CREATE TABLE enum_role (
     id UUID PRIMARY KEY,
@@ -73,7 +74,8 @@ CREATE TABLE user_role (
 CREATE TABLE subcategory (
     id UUID PRIMARY KEY,
     name VARCHAR(50) NOT NULL,
-    coefficient_sales DECIMAL(15, 2) DEFAULT 1.00
+    percentage_of_sale DECIMAL(3) NOT NULL DEFAULT 3,
+    margin_percentage DECIMAL(4,2) NOT NULL DEFAULT 1.00
 );
 CREATE TABLE category_subcategory (
     id UUID PRIMARY KEY,
@@ -109,9 +111,9 @@ CREATE TABLE discount (
 );
 CREATE TABLE product (
     id UUID PRIMARY KEY,
-    brand VARCHAR(100),
-    model VARCHAR(100),
-    characteristics TEXT,
+    brand VARCHAR(128),
+    model VARCHAR(128),
+    characteristics VARCHAR(128),
     quantity INT NOT NULL,
     currency_id UUID NOT NULL REFERENCES enum_currency(id),
     price_with_vat DECIMAL(10, 2) NOT NULL,
@@ -122,7 +124,7 @@ CREATE TABLE product (
     user_sale_product_id UUID REFERENCES "user"(id),
     category_subcategory_id UUID NOT NULL REFERENCES category_subcategory(id),
     trade_point_id UUID NOT NULL REFERENCES trade_point(id),
-    sku VARCHAR(128),
+    sku VARCHAR(384),
     discount_id UUID REFERENCES discount(id)
 );
 CREATE TABLE update_product_history (
@@ -130,12 +132,12 @@ CREATE TABLE update_product_history (
     product_id UUID NOT NULL REFERENCES product(id),
     user_id UUID NOT NULL REFERENCES "user"(id),
     date_update TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    old_brand VARCHAR(100),
-    new_brand VARCHAR(100),
-    old_model VARCHAR(100),
-    new_model VARCHAR(100),
-    old_characteristics TEXT,
-    new_characteristics TEXT,
+    old_brand VARCHAR(128),
+    new_brand VARCHAR(128),
+    old_model VARCHAR(128),
+    new_model VARCHAR(128),
+    old_characteristics VARCHAR(128),
+    new_characteristics VARCHAR(128),
     old_quantity INT,
     new_quantity INT,
     old_currency_id UUID NOT NULL REFERENCES enum_currency(id),
@@ -149,7 +151,9 @@ CREATE TABLE update_product_history (
     old_category_subcategory_id UUID NOT NULL REFERENCES category_subcategory(id),
     new_category_subcategory_id UUID NOT NULL REFERENCES category_subcategory(id),
     old_trade_point_id UUID NOT NULL REFERENCES trade_point(id),
-    new_trade_point_id UUID NOT NULL REFERENCES trade_point(id)
+    new_trade_point_id UUID NOT NULL REFERENCES trade_point(id),
+    old_sku VARCHAR(384),
+    new_sku VARCHAR(384)
 );
 
 CREATE TABLE sale (

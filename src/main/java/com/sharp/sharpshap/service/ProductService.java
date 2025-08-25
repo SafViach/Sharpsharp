@@ -8,6 +8,7 @@ import com.sharp.sharpshap.enums.EnumStatusProduct;
 import java.time.LocalDateTime;
 
 import com.sharp.sharpshap.exceptions.CategoryNotFoundException;
+import com.sharp.sharpshap.exceptions.SubcategoryNotFoundException;
 import com.sharp.sharpshap.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
-import java.math.*;
 import java.util.UUID;
 
 @Service
@@ -26,7 +26,7 @@ public class ProductService {
     private final DiscountService discountService;
     private final StatusProductService statusProductService;
     private final UserService userService;
-    private final SubcategoryService subcategoryService;
+    private final SubcategoryRepository subcategoryRepository; //  : (
     private final CategoryRepository categoryRepository; //  : (
     private final ProductRepository productRepository;
     private final TradePointService tradePointService;
@@ -50,7 +50,9 @@ public class ProductService {
 
         if (uuidSubcategory != null) {
             logger.info("ProductService: ---createdProduct subcategoryService.getSubcategoryByUuid(uuidSubcategory);");
-            subcategory = subcategoryService.getSubcategoryByUuid(uuidSubcategory);
+            subcategory = subcategoryRepository.findById(uuidSubcategory).orElseThrow(() ->
+                    new SubcategoryNotFoundException("SubcategoryService: ---getSubcategoryByUuid " +
+                            "подкатегория по UUID не найдена в БД"));
         }
 
 
@@ -135,10 +137,10 @@ public class ProductService {
         BigDecimal sumPriceProduct;
 
         if(subcategory != null){
-            BigDecimal coeff = subcategory.getCoefficientSales();
+            BigDecimal coeff = subcategory.getPercentageOfSale();
             sumPriceProduct = coeff.multiply(sumPriceProductNotCoefficient);
         }else{
-            BigDecimal coeff = category.getCoefficientSale();
+            BigDecimal coeff = category.getPercentageOfSale();
             sumPriceProduct = coeff.multiply(sumPriceProductNotCoefficient);
 
         }

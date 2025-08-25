@@ -41,6 +41,18 @@ public class CategorySubcategoryService {
         return subcategoriesDTO;
     }
 
+    public CategorySubcategory getById(UUID uuidCategorySubcategory){
+        return categorySubcategoryRepository.findById(uuidCategorySubcategory).orElseThrow(()->
+                new CategorySubcategoryNotFoundException("Связь категории и подкатегории по uuid не найдена в бд"));
+    }
+    public void deleteCategorySubcategory(CategorySubcategory categorySubcategory){
+        logger.info("CategorySubcategoryService: ---deleteCategorySubcategory Удаляем вявь " + categorySubcategory.getCategory().getName()
+        + " c " + categorySubcategory.getSubcategory().getName());
+        getById(categorySubcategory.getId());
+        categorySubcategoryRepository.deleteById(categorySubcategory.getId());
+        logger.info("Связь удалена");
+    }
+
     public CategorySubcategory getByCategoryAndSubcategory(Category category, Subcategory subcategory) {
         logger.info("CategorySubcategoryRepository: ---getByCategoryAndSubcategory");
         return subcategory == null

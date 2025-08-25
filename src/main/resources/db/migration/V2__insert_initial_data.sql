@@ -115,7 +115,5 @@ INSERT INTO category_subcategory (id, category_id, subcategory_id) VALUES
     (RANDOM_UUID(), @category_films_id, @subcategory_matte_id),
     (RANDOM_UUID(), @category_rugs_id, null);
 
--- INSERT INTO  enum_currency (id, description, rate, last_update) VALUES
---     (RANDOM_UUID(), 'BYN', 1, null);
 
 
