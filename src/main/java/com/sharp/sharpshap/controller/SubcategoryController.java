@@ -1,8 +1,6 @@
 package com.sharp.sharpshap.controller;
 
-import com.sharp.sharpshap.dto.ResponseSubcategoryDTO;
-import com.sharp.sharpshap.dto.SubcategoryPercentageOfSaleDTO;
-import com.sharp.sharpshap.dto.SubcategoryNameDTO;
+import com.sharp.sharpshap.dto.*;
 import com.sharp.sharpshap.service.CategorySubcategoryService;
 import com.sharp.sharpshap.service.JwtService;
 import com.sharp.sharpshap.service.SubcategoryService;
@@ -15,6 +13,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -23,20 +22,41 @@ import java.util.UUID;
 public class SubcategoryController {
 
     private final SubcategoryService subcategoryService;
-    private final static Logger logger = LoggerFactory.getLogger(CategorySubcategoryService.class);
+    private final CategorySubcategoryService categorySubcategoryService;
+    private final static Logger logger = LoggerFactory.getLogger(SubcategoryController.class);
+
+    @GetMapping("/get-subcategories-by-uuid-category/for-add-product/{uuidCategory}")
+    public ResponseEntity<List<ResponseSubcategoryDTO>> getAllSubcategoriesByCategoryUuid(@PathVariable(name = "uuidCategory") UUID uuidCategory) {
+        logger.info("CategoryController: ---getAllSubcategoriesByCategoryUuid");
+        List<ResponseSubcategoryDTO> responseSubcategoriesDTO = categorySubcategoryService.getSubcategories(uuidCategory);
+
+        ResponseCookie cookieUuidCategory = ResponseCookie.from("uuidCategory", uuidCategory.toString())
+                .httpOnly(false)
+                .secure(true)
+                .path("/")
+                .maxAge(43200)
+                .build();
+
+        logger.info("CategoryController:  ---getAllSubcategoriesByCategoryUuid Очищаем uuidSubcategory из cookie");
+        ResponseCookie cookieUuidSubcategory = ResponseCookie.from("uuidSubcategory", "")
+                .httpOnly(false)
+                .secure(true)
+                .path("/")
+                .maxAge(0) // удаляет куку
+                .build();
+
+        logger.info("CategoryController: ---getAllSubcategoriesByCategoryUuid добавляем uuidCategory в cookie");
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookieUuidSubcategory.toString())
+                .header(HttpHeaders.SET_COOKIE, cookieUuidCategory.toString()).body(responseSubcategoriesDTO);
+    }
 
     @GetMapping("/{uuidSubcategory}")
     public ResponseEntity<ResponseSubcategoryDTO> getSubcategory(@PathVariable(name = "uuidSubcategory") UUID uuidSubcategory) {
         logger.info("SubcategoryController: ---getSubcategory Получение подкатегории по uuid и добавление в cookie");
         ResponseSubcategoryDTO responseSubcategoryDTO = subcategoryService.getSubcategoryDTOByUuid(uuidSubcategory);
-        ResponseCookie cookie = ResponseCookie.from("uuidSubcategory", uuidSubcategory.toString())
-                .httpOnly(true)
-                .secure(false)
-                .path("/")
-                .maxAge(JwtService.getRefreshExpirationMs())
-                .domain("localhost")
-                .build();
-        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(responseSubcategoryDTO);
+        return ResponseEntity.ok().body(responseSubcategoryDTO);
     }
 
     @PostMapping("/createSubcategory/{uuidCategory}")
@@ -59,11 +79,20 @@ public class SubcategoryController {
         subcategoryService.updateNameSubcategory(subcategoryNameDTO, uuidSubcategory);
         return ResponseEntity.ok().build();
     }
-    @PatchMapping("/coefficient-set/{uuidSubcategory}")
+    @PatchMapping("/set-percentage-of-sale/{uuidSubcategory}")
     public ResponseEntity updatePercentageOfSale(@PathVariable(name = "uuidSubcategory") UUID uuidSubcategory,
                                                        @Valid @RequestBody SubcategoryPercentageOfSaleDTO percentageOfSaleDTO){
         subcategoryService.updatePercentageOfSale(percentageOfSaleDTO, uuidSubcategory);
         return ResponseEntity.ok().build();
     }
-
+    @PatchMapping("/set-margin-percentage/{uuidSubcategory}")
+    public ResponseEntity updateMarginPercentage(@PathVariable(name = "uuidSubcategory") UUID uuidSubcategory,
+                                                 @Valid @RequestBody SubcategoryMarginPercentageDTO marginPercentageDTO){
+        subcategoryService.updateMarginPercentage(marginPercentageDTO,uuidSubcategory);
+        return ResponseEntity.ok().build();
+    }
+    @GetMapping("/get-subcategories-by-uuid-category/for-update-product/{uuidCategory}")
+    public ResponseEntity<List<ResponseSubcategoryDTO>> getAllSubcategoryByUuidCategory(@PathVariable(name = "uuidCategory") UUID uuidCategory){
+       return ResponseEntity.ok().body(subcategoryService.getAllSubcategoryByUuidCategory(uuidCategory));
+    }
 }

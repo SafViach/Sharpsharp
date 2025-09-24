@@ -110,22 +110,31 @@ CREATE TABLE discount (
     discount_amount DECIMAL(15, 2) NOT NULL
 );
 CREATE TABLE product (
-    id UUID PRIMARY KEY,
-    brand VARCHAR(128),
-    model VARCHAR(128),
-    characteristics VARCHAR(128),
-    quantity INT NOT NULL,
-    currency_id UUID NOT NULL REFERENCES enum_currency(id),
-    price_with_vat DECIMAL(10, 2) NOT NULL,
-    price_selling DECIMAL(10, 2) NOT NULL,
+    id UUID PRIMARY KEY, -- -
+    brand VARCHAR(128), -- -
+    model VARCHAR(128), -- -
+    characteristics VARCHAR(128), -- -
+    quantity INT NOT NULL, -- -
+    currency_id UUID NOT NULL REFERENCES enum_currency(id), -- -
+    currency_rate DECIMAL(10, 2) NOT NULL,
+    price_with_vat DECIMAL(10, 2) NOT NULL, -- -
+    price_selling DECIMAL(10, 2) NOT NULL, -- -
     status_id UUID NOT NULL REFERENCES enum_status_product(id),
+     -- + idx_product_status_id(status_id)
     date_of_arrival TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+     -- + idx_product_date_arrival(date_of_arrival)
     user_accepted_product_id UUID NOT NULL REFERENCES "user"(id),
+    -- + idx_product_user_accepted_id(user_accepted_product_id)
     user_sale_product_id UUID REFERENCES "user"(id),
+     -- + idx_product_user_sale_id(user_sale_product_id)
     category_subcategory_id UUID NOT NULL REFERENCES category_subcategory(id),
+    -- + idx_product_category_subcategory_id(category_subcategory_id)
     trade_point_id UUID NOT NULL REFERENCES trade_point(id),
-    sku VARCHAR(384),
-    discount_id UUID REFERENCES discount(id)
+    -- + idx_product_trade_point_id(trade_point_id)
+    sku VARCHAR(768) NOT NULL,
+    -- + idx_product_sku(sku)
+    discount_id UUID REFERENCES discount(id),
+    version INTEGER
 );
 CREATE TABLE update_product_history (
     id UUID PRIMARY KEY,
@@ -169,5 +178,22 @@ CREATE TABLE sales_products (
     sale_id UUID NOT NULL REFERENCES sale(id),
     product_id UUID NOT NULL REFERENCES product(id),
     price DECIMAL(10, 2) NOT NULL
+);
+CREATE TABLE product_change_request(
+    id UUID PRIMARY KEY,
+    product_id UUID NOT NULL REFERENCES product(id),
+    brand VARCHAR(128),
+    model VARCHAR(128),
+    characteristics VARCHAR(128),
+    quantity INT NOT NULL,
+    currency_id UUID NOT NULL REFERENCES enum_currency(id),
+    currency_rate DECIMAL(10, 2) NOT NULL,
+    price_with_vat DECIMAL(10, 2) NOT NULL,
+    price_selling DECIMAL(10, 2) NOT NULL,
+    status_id UUID NOT NULL REFERENCES enum_status_product(id),
+    category_subcategory_id UUID NOT NULL REFERENCES category_subcategory(id),
+    sku VARCHAR(768) NOT NULL,
+    user_id UUID NOT NULL REFERENCES "user"(id),
+    trade_point_id UUID NOT NULL REFERENCES trade_point(id)
 );
 

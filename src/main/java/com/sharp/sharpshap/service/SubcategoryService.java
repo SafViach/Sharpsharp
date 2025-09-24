@@ -1,8 +1,6 @@
 package com.sharp.sharpshap.service;
 
-import com.sharp.sharpshap.dto.ResponseSubcategoryDTO;
-import com.sharp.sharpshap.dto.SubcategoryPercentageOfSaleDTO;
-import com.sharp.sharpshap.dto.SubcategoryNameDTO;
+import com.sharp.sharpshap.dto.*;
 import com.sharp.sharpshap.entity.Category;
 import com.sharp.sharpshap.entity.CategorySubcategory;
 import com.sharp.sharpshap.entity.Subcategory;
@@ -19,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -32,8 +31,13 @@ public class SubcategoryService {
 
     public ResponseSubcategoryDTO getSubcategoryDTOByUuid(UUID uuidSubcategory) {
         Subcategory subcategory = getSubcategoryByUuid(uuidSubcategory);
-        return ResponseSubcategoryDTO.to(subcategory);
+        return responseSubcategoryDTO(subcategory);
     }
+
+    private ResponseSubcategoryDTO responseSubcategoryDTO(Subcategory subcategory){
+        return new ResponseSubcategoryDTO(subcategory.getId(), subcategory.getName());
+    }
+
 
     public Subcategory getSubcategoryByUuid(UUID uuidSubcategory) {
         return subcategoryRepository.findById(uuidSubcategory).orElseThrow(() ->
@@ -105,6 +109,17 @@ public class SubcategoryService {
         Subcategory subcategory = getSubcategoryByUuid(uuidSubcategory);
         subcategory.setPercentageOfSale(percentageOfSaleDTO.getPercentageOfSale());
         subcategoryRepository.save(subcategory);
+    }
+    public void updateMarginPercentage(SubcategoryMarginPercentageDTO marginPercentageDTO,
+                                       UUID uuidSubcategory){
+        Subcategory subcategory = getSubcategoryByUuid(uuidSubcategory);
+        subcategory.setMarginPercentage(marginPercentageDTO.getMarginPercentage());
+        subcategoryRepository.save(subcategory);
+    }
+    public List<ResponseSubcategoryDTO> getAllSubcategoryByUuidCategory(UUID uuidCategory){
+        Category category = categoryRepository.findById(uuidCategory).orElseThrow(() ->
+                new CategoryNotFoundException("CategoryService: ---getCategoryById Такой категории не найдено"));
+        return categorySubcategoryService.getSubcategories(uuidCategory);
     }
 
 

@@ -28,6 +28,10 @@ spring:
 logging:
   level:
     org:
+      endle:
+        jdbc:
+          sql:
+            SqlExceptionHelper: DEBUG
       springframework:
         security: DEBUG
       hibernate:

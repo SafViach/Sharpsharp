@@ -14,7 +14,7 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByLogin(String login);
 
-    @Query("SELECT u FROM User u WHERE LOWER(u.lastName) LIKE  lOWER(CONCAT(:name,'%')) OR lOWER(u.firstName) LIKE" +
+    @Query("SELECT u FROM User u WHERE LOWER(u.lastName) LIKE lOWER(CONCAT(:name,'%')) OR lOWER(u.firstName) LIKE" +
             " LOWER(CONCAT(:name,'%'))")
     List<User> findByLastNameOrFirstName(@Param("name") String prefix);
 

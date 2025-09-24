@@ -1,8 +1,7 @@
 package com.sharp.sharpshap.controller;
 
-import com.sharp.sharpshap.dto.ResponseTradePointDTO;
+import com.sharp.sharpshap.dto.ResponseNameTradePointDTO;
 import com.sharp.sharpshap.entity.TradePoint;
-import com.sharp.sharpshap.entity.User;
 import com.sharp.sharpshap.error.ErrorResponse;
 import com.sharp.sharpshap.exceptions.TradePointNotFoundException;
 import com.sharp.sharpshap.service.JwtService;
@@ -12,13 +11,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -31,18 +27,15 @@ public class TradePointController {
     public static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @GetMapping
-    public ResponseEntity<Object> getAllTradePoints() {
-        try {
-            return ResponseEntity.ok().body(tradePointService.getAllTradePoints());
-        } catch (RuntimeException e) {
-            return ErrorResponse.error(new TradePointNotFoundException("TradePointController: ---getAllTradePoints Торговые точки не найдены"), HttpStatus.NOT_FOUND);
-        }
+    public ResponseEntity<List<ResponseNameTradePointDTO>> getAllTradePoints() {
+        return ResponseEntity.ok().body(tradePointService.getAllTradePointResponseNameTradePointDTO());
     }
 
     @GetMapping("/{uuidTradePoint}")
-    public ResponseEntity<ResponseTradePointDTO> getTradePoint(HttpServletRequest request,
-                                                    @PathVariable("uuidTradePoint") UUID uuidTradePoint) {
-        logger.info("tradePoints:  ---настраиваем настройки для uuidTradePoint");
+    public ResponseEntity setUserTradePoint(HttpServletRequest request,
+                                            @PathVariable("uuidTradePoint") UUID uuidTradePoint) {
+        logger.info("tradePoints:  ---setUserTradePoint присваиваем пользователю торговую точку на которой будет производить работу");
+        tradePointService.setTradePointForUser(request.getAttribute("uuidUser"), uuidTradePoint);
         ResponseCookie cookie = ResponseCookie.from("uuidTradePoint", uuidTradePoint.toString())
                 .httpOnly(true)
                 .secure(false)
@@ -51,9 +44,7 @@ public class TradePointController {
                 .domain("localhost")
                 .build();
         UUID uuidUser = (UUID) request.getAttribute("uuidUser");
-        ResponseTradePointDTO responseTradePointDTO= tradePointService.setTradePointForUser(uuidUser, uuidTradePoint);
-
-        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(responseTradePointDTO);
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).build();
 
     }
 

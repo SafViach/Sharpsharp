@@ -1,7 +1,7 @@
 package com.sharp.sharpshap.service;
 
-import com.sharp.sharpshap.dto.ResponseTradePointDTO;
-import com.sharp.sharpshap.dto.ResponseTradePointsDTO;
+import com.sharp.sharpshap.dto.ResponseNameTradePointDTO;
+import com.sharp.sharpshap.dto.ResponseTradePointForAuthDTO;
 import com.sharp.sharpshap.entity.User;
 import com.sharp.sharpshap.exceptions.TradePointNotFoundException;
 import com.sharp.sharpshap.entity.TradePoint;
@@ -15,7 +15,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,19 +32,19 @@ public class TradePointService {
     }
 
     @Transactional
-    public ResponseTradePointDTO setTradePointForUser(UUID uuidUser, UUID uuidTradePoint) {
-        logger.info("TradePointService: ---setTradePointForUser присваиваем пользователю точку на которой он работает");
-        User user = userRepository.findById(uuidUser).orElseThrow(() ->
+    public void setTradePointForUser(Object uuidUser, UUID uuidTradePoint) {
+        if (uuidUser == null){
+            throw  new UsernameNotFoundException("TradePointService: --- В метод setTradePointForUser uuidUser == null");
+        }
+        User user = userRepository.findById(UUID.fromString(uuidUser.toString())).orElseThrow(() ->
                 new UsernameNotFoundException("TradePointService: ---setTradePointForUser Пользователь не найден"));
 
         TradePoint tradePoint = tradePointRepository.findById(uuidTradePoint).orElseThrow(() ->
                 new TradePointNotFoundException("TradePointService: ---setTradePointForUser Торговая точка не найдена"));
-
-        ResponseTradePointDTO responseTradePointDTO = new ResponseTradePointDTO();
-        responseTradePointDTO.setTradePoint(tradePoint);
+        logger.info("TradePointService: ---setTradePointForUser присваиваем пользователю " + user.getFirstName() + " " + user.getLastName() +
+                "точку на которой он работает: " + tradePoint.getName());
         user.setTradePointId(tradePoint);
-
-        return responseTradePointDTO;
+        userRepository.save(user);
     }
 
 
@@ -52,20 +54,38 @@ public class TradePointService {
 
     }
 
-    public TradePoint getByIdTradePoint(UUID uuidUser) {
-        return tradePointRepository.findById(uuidUser).orElseThrow(() -> new TradePointNotFoundException("Такой точки с id не найдена"));
+    public TradePoint getByIdTradePoint(UUID uuidTradePoint) {
+        return tradePointRepository.findById(uuidTradePoint).orElseThrow(() -> new TradePointNotFoundException("Такой точки с id не найдена"));
     }
 
-    public ResponseTradePointsDTO getAllTradePoints() {
-        logger.info("TradePointService: ---getAllTradePoints Поиск всех торговых точек в БД");
-        List<TradePoint> tradePoint = tradePointRepository.findAll();
-        if (tradePoint.isEmpty()) {
-            throw new RuntimeException("Список точек пуст");
-        }
+    public List<ResponseTradePointForAuthDTO> getTradePointsForAuth(){
+        return transformResponseTradePointForAuth(getAllTradePoints());
+    }
+    private List<ResponseTradePointForAuthDTO> transformResponseTradePointForAuth(List<TradePoint> tradePoints){
+        return tradePoints.stream()
+                .map(tradePoint -> new ResponseTradePointForAuthDTO(
+                        tradePoint.getId(),
+                        tradePoint.getName(),
+                        tradePoint.getAddress(),
+                        tradePoint.getMoneyInBox(),
+                        tradePoint.getMoneyInTheCashRegister(),
+                        tradePoint.getSumFinishOffTheMoney()
+                ))
+                .collect(Collectors.toList());
+    }
 
-        ResponseTradePointsDTO responseTradePointsDTO = new ResponseTradePointsDTO();
-        responseTradePointsDTO.setTradePoints(tradePoint);
-        return responseTradePointsDTO;
+    public List<TradePoint> getAllTradePoints() {
+        logger.info("TradePointService: ---getAllTradePoints получение всех торговых точек в БД");
+        return tradePointRepository.findAll();
+    }
+    public List<ResponseNameTradePointDTO> getAllTradePointResponseNameTradePointDTO(){
+        return transInResponseNameTradePointDTO(getAllTradePoints());
+    }
+
+    private List<ResponseNameTradePointDTO> transInResponseNameTradePointDTO(List<TradePoint> tradePoints){
+        return tradePoints.stream()
+                .map( tradePoint -> new ResponseNameTradePointDTO(tradePoint.getId(), tradePoint.getName()))
+                .collect(Collectors.toList());
     }
 
     public TradePoint updateTradePoint(UUID uuid, TradePoint updateTradePoint) {

@@ -100,10 +100,18 @@ public class GlobalExceptionHandler {
         logger.error("GlobalExceptionHandler: handlerResourceAlreadyExistsException(ResourceAlreadyExistsException)  ~~~Уже есть в базе");
         return ResponseEntity.status(HttpStatus.CONFLICT).body(exception.getMessage());
     }
+    @ExceptionHandler(DeleteException.class)
     public ResponseEntity<String>errorDelete(DeleteException exception){
         logger.error("GlobalExceptionHandler: errorDelete(DeleteException  ~~Отмена удаления" + exception.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(exception.getMessage());
     }
+    @ExceptionHandler(CreateProductException.class)
+    public ResponseEntity<String>errorCreateProduct(CreateProductException exception){
+        logger.error("GlobalExceptionHandler: errorCreateProduct(CreateProductException  ~~Отмена создания продукта"
+                + exception.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(exception.getMessage());
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<String> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
         Throwable cause = ex.getCause();
@@ -121,5 +129,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(
                 "{\"error\": \"Некорректный формат данных. Проверьте, что вводите число.\"}"
         );
+    }
+    @ExceptionHandler(ProductChangeRequestNotFoundException.class)
+    public ResponseEntity<String>errorFound(ProductChangeRequestNotFoundException exception){
+        logger.error("ProductChangeRequestNotFoundException: errorFound(DeleteException  ~~нет в БД" + exception.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getMessage());
     }
 }

@@ -1,16 +1,25 @@
 package com.sharp.sharpshap.dto;
 
-import jakarta.validation.constraints.*;
-import lombok.Builder;
-import lombok.Data;
+import com.sharp.sharpshap.entity.CategorySubcategory;
+import com.sharp.sharpshap.enums.EnumStatusProduct;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
-@Data
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public class ProductCreateDTO {
-
+public class ProductChangeDTO {
+    @NotNull(message = "Выберите категорию")
+    private UUID uuidCategory;
+    private UUID uuidSubcategory;
     private String brand;
     private String model;
     private String characteristics;
@@ -21,10 +30,12 @@ public class ProductCreateDTO {
     @NotNull(message = "введите цену с НДС")
     @DecimalMin(value = "0.1", message = "цена должны быть не ниже 0.1")
     private BigDecimal priceWithVat;
-    private UUID currencyId;
-    private BigDecimal priceSelling;
     @NotNull(message = "введите курс по которому высчитывать цену товара")
-    private BigDecimal currencyRate;
+    private BigDecimal rateCurrency;
+    private UUID uuidCurrency;
+
+    private BigDecimal priceSelling;
+
 
     @AssertTrue(message = "Хотя бы одно поле (Брэнд, Модель или Характеристики) должно быть заполнено ")
     public boolean isValid() {
@@ -32,4 +43,5 @@ public class ProductCreateDTO {
                 model != null && !model.isEmpty() ||
                 characteristics != null && !characteristics.isEmpty();
     }
+
 }

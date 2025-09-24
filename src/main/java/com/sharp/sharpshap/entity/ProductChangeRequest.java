@@ -3,22 +3,22 @@ package com.sharp.sharpshap.entity;
 import com.sharp.sharpshap.enums.EnumCurrency;
 import com.sharp.sharpshap.enums.EnumStatusProduct;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-@Builder
-public class Product {
-
+@Setter
+@Getter
+public class ProductChangeRequest {
     @Id
     @GeneratedValue
     private UUID id;
+
+    @ManyToOne
+    private Product product;
 
     private String brand;
     private String model;
@@ -40,34 +40,19 @@ public class Product {
     private BigDecimal priceSelling;
 
     @ManyToOne
-    @JoinColumn(name = "status_id", nullable = false)
+    @JoinColumn(name = "status_id")
     private EnumStatusProduct statusProduct;
 
-    @Column(columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    private LocalDateTime dateOfArrival;
-
-    @ManyToOne
-    @JoinColumn(name = "user_accepted_product_id", nullable = false)
-    private User userAcceptedProduct;
-
-    @ManyToOne
-    @JoinColumn(name = "user_sale_product_id")
-    private User userSaleProduct;
-
     @ManyToOne(cascade = CascadeType.REFRESH)
-    @JoinColumn(name = "category_subcategory_id" , nullable = false)
+    @JoinColumn(name = "category_subcategory_id", nullable = false)
     private CategorySubcategory categorySubcategory;
-
-    @ManyToOne
-    @JoinColumn(name = "trade_point_id", nullable = false)
-    private TradePoint tradePoint;
 
     private String sku;
 
     @ManyToOne
-    @JoinColumn(name = "discount_id")
-    private Discount discount;
+    @JoinColumn(name = "user_id")
+    private User user;
 
-    @Version
-    private Integer version;
+    @ManyToOne
+    private TradePoint tradePoint;
 }

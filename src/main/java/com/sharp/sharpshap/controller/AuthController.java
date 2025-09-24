@@ -2,8 +2,7 @@ package com.sharp.sharpshap.controller;
 
 import com.sharp.sharpshap.dto.AuthAccessTokenResponseDTO;
 import com.sharp.sharpshap.dto.AuthRequestDTO;
-import com.sharp.sharpshap.dto.ResponseTradePointsDTO;
-import com.sharp.sharpshap.entity.TradePoint;
+import com.sharp.sharpshap.dto.ResponseTradePointForAuthDTO;
 import com.sharp.sharpshap.entity.User;
 import com.sharp.sharpshap.service.*;
 import jakarta.validation.Valid;
@@ -31,12 +30,12 @@ public class AuthController {
     public static final Logger logger = LoggerFactory.getLogger(AuthController.class);
 
     @PostMapping("/login")
-    public ResponseEntity<ResponseTradePointsDTO> login(@RequestBody @Valid AuthRequestDTO requestDTO) {
+    public ResponseEntity<List<ResponseTradePointForAuthDTO>> login(@RequestBody @Valid AuthRequestDTO requestDTO) {
         logger.info("AuthController: /login");
 
         String accessToken = authService.authenticateUserLoad(requestDTO);
 
-        ResponseTradePointsDTO responseTradePointsDTO = tradePointService.getAllTradePoints();
+        List<ResponseTradePointForAuthDTO> responseTradePointForAuth = tradePointService.getTradePointsForAuth();
 
 
         logger.info("AuthController: /login  ---настраиваем настройки для AccessToken");
@@ -49,7 +48,7 @@ public class AuthController {
                 .build();
 
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body(responseTradePointsDTO);
+                .body(responseTradePointForAuth);
     }
 
     @PostMapping("/refresh")

@@ -1,8 +1,9 @@
 package com.sharp.sharpshap.service;
 
+import com.sharp.sharpshap.dto.CategoryMarginPercentageDTO;
 import com.sharp.sharpshap.dto.CategoryPercentageOfSaleDTO;
 import com.sharp.sharpshap.dto.CategoryNameDTO;
-import com.sharp.sharpshap.dto.ResponseCategoriesDTO;
+import com.sharp.sharpshap.dto.ResponseCategoryDTO;
 import com.sharp.sharpshap.entity.CategorySubcategory;
 import com.sharp.sharpshap.entity.Subcategory;
 import com.sharp.sharpshap.exceptions.CategoryNotFoundException;
@@ -16,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -28,14 +30,25 @@ public class CategoryService {
     private final static Logger logger = LoggerFactory.getLogger(ProductService.class);
 
 
-    public ResponseCategoriesDTO getCategories() {
+    public List<ResponseCategoryDTO> getCategories() {
         logger.info("CategoryService: ---getCategories Получение всех категорий");
-        ResponseCategoriesDTO responseCategoriesDTO = new ResponseCategoriesDTO();
-        responseCategoriesDTO.setCategories(categoryRepository.findAll());
+        List<Category> categoryList = categoryRepository.findAll();
+        List<ResponseCategoryDTO> responseCategoriesDTO = categoryList.stream()
+                .map(category -> toResponseCategoryDTO(category))
+                .collect(Collectors.toList());
+
         return responseCategoriesDTO;
     }
+    private ResponseCategoryDTO toResponseCategoryDTO(Category category){
+        return new ResponseCategoryDTO(category.getId(), category.getName());
+    }
 
-    public Category getCategoryById(UUID uuid) {
+    public ResponseCategoryDTO getCategoryDTOByUuid(UUID uuidCategory){
+        Category category = getCategoryByUuid(uuidCategory);
+        return toResponseCategoryDTO(category);
+    }
+
+    public Category getCategoryByUuid(UUID uuid) {
         logger.info("CategoryService: ---getCategoryById");
         return categoryRepository.findById(uuid).orElseThrow(() ->
                 new CategoryNotFoundException("CategoryService: ---getCategoryById Такой категории не найдено"));
@@ -89,7 +102,7 @@ public class CategoryService {
     }
 
     public void deleteCategory(UUID uuidCategory) {
-        Category category = getCategoryById(uuidCategory);
+        Category category = getCategoryByUuid(uuidCategory);
         logger.info("CategoryService: ---deleteCategory Удаление: " + category.getName());
         boolean resultIsEmptyCategoryBySubcategory = isEmptyCategoryBySubcategory(category);
         logger.info("CategoryService: ---deleteCategory Проверили есть ли у категории подкатегории результат: " + !resultIsEmptyCategoryBySubcategory);
@@ -122,15 +135,22 @@ public class CategoryService {
     }
 
     public void updateName(CategoryNameDTO newCategoryNameDTO, UUID uuidCategory) {
-        Category category = getCategoryById(uuidCategory);
+        Category category = getCategoryByUuid(uuidCategory);
         category.setName(newCategoryNameDTO.getName());
         categoryRepository.save(category);
     }
 
     public void updatePercentageOfSale(CategoryPercentageOfSaleDTO percentageOfSaleDTO,
                                        UUID uuidCategory) {
-        Category category = getCategoryById(uuidCategory);
+        Category category = getCategoryByUuid(uuidCategory);
         category.setPercentageOfSale(percentageOfSaleDTO.getPercentageOfSale());
+        categoryRepository.save(category);
+    }
+
+    public void updateMarginPercentage(CategoryMarginPercentageDTO marginPercentageDTO,
+                                       UUID uuidCategory){
+        Category category = getCategoryByUuid(uuidCategory);
+        category.setMarginPercentage(marginPercentageDTO.getMarginPercentage());
         categoryRepository.save(category);
     }
 }

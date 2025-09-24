@@ -1,6 +1,7 @@
 package com.sharp.sharpshap.controller;
 
 import com.sharp.sharpshap.dto.*;
+import com.sharp.sharpshap.entity.Category;
 import com.sharp.sharpshap.service.CategoryService;
 import com.sharp.sharpshap.service.CategorySubcategoryService;
 import com.sharp.sharpshap.service.ProductService;
@@ -24,54 +25,52 @@ public class CategoryController {
     public final CategorySubcategoryService categorySubcategoryService;
     private final static Logger logger = LoggerFactory.getLogger(ProductService.class);
 
-    @GetMapping("/{uuidCategory}")
-    public ResponseEntity<List<ResponseSubcategoryDTO>> getAllSubcategoriesByCategoryUuid(
-            @PathVariable(name = "uuidCategory") UUID uuidCategory) {
-        logger.info("CategoryController: ---getAllSubcategoriesByCategoryUuid");
-        List<ResponseSubcategoryDTO> responseSubcategoriesDTO = categorySubcategoryService.getSubcategories(uuidCategory);
+    @GetMapping("{uuidCategory}")
+    public ResponseEntity<ResponseCategoryDTO> getCategoryByUuid(@PathVariable(name = "uuidCategory") UUID uuidCategory) {
+        ResponseCategoryDTO categoryDTO = categoryService.getCategoryDTOByUuid(uuidCategory);
 
-        ResponseCookie cookie = ResponseCookie.from("uuidCategory", uuidCategory.toString())
-                .httpOnly(false)
-                .secure(true)
-                .path("/")
-                .maxAge(43200)
-                .build();
+        logger.info("CategoryController: ---setCookieUuidCategory добавляем uuidCategory в cookie");
 
-        logger.info("CategoryController: ---getAllSubcategoriesByCategoryUuid добавляем uuidCategory в cookie");
-
-        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(responseSubcategoriesDTO);
+        return ResponseEntity.ok().body(categoryDTO);
     }
 
     @GetMapping()
-    public ResponseEntity<ResponseCategoriesDTO> getCategories() {
+    public ResponseEntity<List<ResponseCategoryDTO>> getCategories() {
         logger.info("CategoryController: ---getCategories отдаём лист категорий для выбора");
-        ResponseCategoriesDTO responseCategoriesDTO = categoryService.getCategories();
-        return ResponseEntity.ok().body(responseCategoriesDTO);
+        return ResponseEntity.ok().body(categoryService.getCategories());
     }
 
     @PostMapping("/createCategory")
-    public ResponseEntity<CategoryNameDTO> createCategory(@Valid @RequestBody CategoryNameDTO categoryCreateDTO){
+    public ResponseEntity<CategoryNameDTO> createCategory(@Valid @RequestBody CategoryNameDTO categoryCreateDTO) {
         CategoryNameDTO createDTO = categoryService.createCategory(categoryCreateDTO);
         return ResponseEntity.ok().body(createDTO);
     }
 
     @DeleteMapping("/{uuidCategory}")
-    public ResponseEntity deleteCategory(@PathVariable(name = "uuidCategory") UUID uuidCategory){
+    public ResponseEntity deleteCategory(@PathVariable(name = "uuidCategory") UUID uuidCategory) {
         categoryService.deleteCategory(uuidCategory);
         return ResponseEntity.ok().build();
 
     }
+
     @PatchMapping("/{uuidCategory}")
     public ResponseEntity updateNameCategory(@PathVariable(name = "uuidCategory") UUID uuidCategory,
-                                             @Valid @RequestBody CategoryNameDTO newCategoryName){
-        categoryService.updateName(newCategoryName , uuidCategory);
+                                             @Valid @RequestBody CategoryNameDTO newCategoryName) {
+        categoryService.updateName(newCategoryName, uuidCategory);
         return ResponseEntity.ok().build();
     }
 
-    @PatchMapping("/coefficient-set/{uuidCategory}")
+    @PatchMapping("/set-percentage-of-sale/{uuidCategory}")
     public ResponseEntity updatePercentageOfSale(@PathVariable(name = "uuidCategory") UUID uuidCategory,
-                                                    @Valid @RequestBody CategoryPercentageOfSaleDTO percentageOfSaleDTO){
-        categoryService.updatePercentageOfSale(percentageOfSaleDTO,uuidCategory);
+                                                 @Valid @RequestBody CategoryPercentageOfSaleDTO percentageOfSaleDTO) {
+        categoryService.updatePercentageOfSale(percentageOfSaleDTO, uuidCategory);
+        return ResponseEntity.ok().build();
+    }
+
+    @PatchMapping("/set-margin-percentage/{uuidCategory}")
+    public ResponseEntity updateMarginPercentage(@PathVariable(name = "uuidCategory") UUID uuidCategory,
+                                                 @Valid @RequestBody CategoryMarginPercentageDTO marginPercentageDTO) {
+        categoryService.updateMarginPercentage(marginPercentageDTO, uuidCategory);
         return ResponseEntity.ok().build();
     }
 
