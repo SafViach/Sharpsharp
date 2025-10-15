@@ -7,9 +7,10 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+
 import java.util.UUID;
 
 @RestController
@@ -24,8 +25,7 @@ public class ProductController {
                                         @CookieValue(name = "uuidTradePoint") UUID uuidTradePoint,
                                         @RequestAttribute(name = "uuidUser") UUID uuidUser,
                                         @CookieValue(name = "uuidCategory") UUID uuidCategory,
-                                        @CookieValue(name = "uuidSubcategory", required = false)
-                                                UUID uuidSubcategory) {
+                                        @CookieValue(name = "uuidSubcategory", required = false) UUID uuidSubcategory) {
         logger.info("ProductController: ---createProduct Создание продукта");
         logger.info("ProductController: ---createProduct полученные данные: productCreateDTO " + productCreateDTO);
         productService.createdProduct(productCreateDTO,
@@ -37,22 +37,41 @@ public class ProductController {
     }
 
     @GetMapping("/getByUuidTradePoint")
-    public ResponseEntity<List<ResponseProductDTO>> getProductsByUuidTradePoint(@CookieValue(name = "uuidTradePoint") UUID uuidTradePoint) {
-        List<ResponseProductDTO> products = productService.getProductsByUuidTradePoints(uuidTradePoint);
-        return ResponseEntity.ok().body(products);
+    public ResponseEntity<ResponseProductSlice> getProductsByUuidTradePoint(@CookieValue(name = "uuidTradePoint") UUID uuidTradePoint,
+                                                                            @RequestParam(required = false) UUID uuidProductAfter,
+                                                                            @RequestParam(defaultValue = "2") int pageSize) {
+        ResponseProductSlice sliceProducts = productService.getProductsByUuidTradePoint(
+                uuidTradePoint,
+                uuidProductAfter,
+                pageSize);
+
+        return ResponseEntity.ok().body(sliceProducts);
     }
 
     @GetMapping("/no-assignment-tp/{uuidTradePoint}")
-    public ResponseEntity getProductsByUuidTradePointNoAssignmentTradePointForUser(@PathVariable(name = "uuidTradePoint") UUID uuidTradePoint) {
-        return ResponseEntity.ok().body(productService.getProductsByUuidTradePointNoAssignmentTradePointForUser(uuidTradePoint));
+    public ResponseEntity<ResponseProductSlice> getProductsByUuidTradePointNoAssignmentTradePointForUser(@PathVariable(name = "uuidTradePoint") UUID uuidTradePoint,
+                                                                                                         @RequestParam(required = false) UUID uuidProductAfter,
+                                                                                                         @RequestParam(defaultValue = "2") int pageSize) {
+        ResponseProductSlice sliceProducts = productService.getProductsByUuidTradePointNoAssignmentTradePointForUser(
+                uuidTradePoint, uuidProductAfter, pageSize);
+
+        return ResponseEntity.ok().body(sliceProducts);
 
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<ResponseOfTheProductFoundDTO>> searchProductByLine(@Valid @RequestBody RequestProductSearchDTO productSearchDTO,
-                                                                                  @CookieValue(name = "uuidTradePoint") UUID uuidTradePoint) {
+    public ResponseEntity<ResponseProductSlice> searchProductByLine(@Valid @RequestBody RequestProductSearchDTO productSearchDTO,
+                                                                    @CookieValue(name = "uuidTradePoint") UUID uuidTradePoint,
+                                                                    @RequestParam(defaultValue = "2") int pageSize,
+                                                                    @RequestParam(required = false) UUID uuidProductAfter) {
         logger.info("ProductController: ---searchProductByLine поиск продуктов по подстраке :" + productSearchDTO.getLineSearch());
-        return ResponseEntity.ok().body(productService.searchByLine(productSearchDTO, uuidTradePoint));
+        ResponseProductSlice sliceProducts = productService.searchByLine(
+                productSearchDTO,
+                uuidTradePoint,
+                uuidProductAfter,
+                pageSize);
+
+        return ResponseEntity.ok().body(sliceProducts);
     }
 
     @GetMapping("/{uuidProduct}")
@@ -68,6 +87,22 @@ public class ProductController {
                                         @RequestBody ProductChangeDTO productChangeDTO) {
         logger.info("ProductController: ---productChange изменения продукта");
         productService.productChange(uuidProduct, uuidUser, uuidTradePoint, productChangeDTO);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{uuidProduct}")
+    public ResponseEntity sendToAnotherTradePoint(@PathVariable(name = "uuidProduct") UUID uuidProduct,
+                                                  @RequestBody RequestUuidTradePoint requestUuidTradePoint){
+        logger.info("ProductController: ---sendToAnotherTradePoint отправка продукта на другую точку");
+        productService.sendToAnotherTradePoint(uuidProduct,requestUuidTradePoint.getUuidTradePoint());
+        return ResponseEntity.ok().build();
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{uuidProduct}")
+    public ResponseEntity deleteProduct (@PathVariable(name = "uuidProduct") UUID uuidProduct){
+        logger.info("ProductController: ---deleteProduct удаление продукта администратором");
+        productService.deleteProduct(uuidProduct);
         return ResponseEntity.ok().build();
     }
 }

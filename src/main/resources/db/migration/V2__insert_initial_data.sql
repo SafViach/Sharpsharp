@@ -22,14 +22,16 @@ INSERT INTO enum_money_location (id, path) VALUES
 
 INSERT INTO enum_status_product (id, status) VALUES
     (RANDOM_UUID(),'EXAMINATION'), --товар есть в налиции и находится на проверке
-    (RANDOM_UUID(),'AVAILABLE'), --товар есть в налиции и доступен к продаже
+    (RANDOM_UUID(),'AVAILABLE'), --товар есть в наличии и доступен к продаже
     (RANDOM_UUID(),'NOT AVAILABLE'), --товара нет в наличии
     (RANDOM_UUID(),'MARRIAGE'), --товар бракованный , ожидает возврата
     (RANDOM_UUID(),'RETURN'), --товар возвращен
     (RANDOM_UUID(),'SOLD'), -- товар продан
     (RANDOM_UUID(),'PENDING_APPROVAL'), -- ожидание одобрения
+    (RANDOM_UUID(),'PENDING'), -- в ожидании
     (RANDOM_UUID(),'APPROVED'), -- одобренный
-    (RANDOM_UUID(),'REJECTED'), -- отклоненный
+    (RANDOM_UUID(),'CANCEL'), -- отклоненный
+    (RANDOM_UUID(),'REMOVABLE'), -- удаляемый
     (RANDOM_UUID(),'MOVING'); -- товар переезжает
 
 SET @status_product_examination_id = (SELECT id FROM enum_status_product WHERE status = 'EXAMINATION');
@@ -140,50 +142,50 @@ INSERT INTO category_subcategory (id, category_id, subcategory_id) VALUES
     (RANDOM_UUID(), @category_glass_id, null),
     (RANDOM_UUID(), @category_rugs_id, null);
 
-INSERT INTO discount (id , discount_amount) VALUES
-    (RANDOM_UUID(), 0),
-    (RANDOM_UUID(), 5),
-    (RANDOM_UUID(), 10),
-    (RANDOM_UUID(), 15),
-    (RANDOM_UUID(), 20),
-    (RANDOM_UUID(), 25),
-    (RANDOM_UUID(), 30),
-    (RANDOM_UUID(), 35),
-    (RANDOM_UUID(), 40),
-    (RANDOM_UUID(), 45),
-    (RANDOM_UUID(), 50),
-    (RANDOM_UUID(), 55),
-    (RANDOM_UUID(), 60),
-    (RANDOM_UUID(), 65),
-    (RANDOM_UUID(), 70),
-    (RANDOM_UUID(), 75),
-    (RANDOM_UUID(), 80),
-    (RANDOM_UUID(), 85),
-    (RANDOM_UUID(), 90),
-    (RANDOM_UUID(), 95),
-    (RANDOM_UUID(), 100);
+-- INSERT INTO discount (id , discount_amount) VALUES
+--     (RANDOM_UUID(), 0),
+--     (RANDOM_UUID(), 5),
+--     (RANDOM_UUID(), 10),
+--     (RANDOM_UUID(), 15),
+--     (RANDOM_UUID(), 20),
+--     (RANDOM_UUID(), 25),
+--     (RANDOM_UUID(), 30),
+--     (RANDOM_UUID(), 35),
+--     (RANDOM_UUID(), 40),
+--     (RANDOM_UUID(), 45),
+--     (RANDOM_UUID(), 50),
+--     (RANDOM_UUID(), 55),
+--     (RANDOM_UUID(), 60),
+--     (RANDOM_UUID(), 65),
+--     (RANDOM_UUID(), 70),
+--     (RANDOM_UUID(), 75),
+--     (RANDOM_UUID(), 80),
+--     (RANDOM_UUID(), 85),
+--     (RANDOM_UUID(), 90),
+--     (RANDOM_UUID(), 95),
+--     (RANDOM_UUID(), 100);
 
-SET @discount_zero_id = (SELECT id FROM discount WHERE discount_amount = 0);
-SET @discount_five_id = (SELECT id FROM discount WHERE discount_amount = 5);
-SET @discount_ten_id = (SELECT id FROM discount WHERE discount_amount = 10);
-SET @discount_fifteen_id = (SELECT id FROM discount WHERE discount_amount = 15);
-SET @discount_twenty_id = (SELECT id FROM discount WHERE discount_amount = 20);
-SET @discount_twenty_five_id = (SELECT id FROM discount WHERE discount_amount = 25);
-SET @discount_thirty_id = (SELECT id FROM discount WHERE discount_amount = 30);
-SET @discount_thirty_five_id = (SELECT id FROM discount WHERE discount_amount = 35);
-SET @discount_fourty_id = (SELECT id FROM discount WHERE discount_amount = 40);
-SET @discount_fourty_five_id = (SELECT id FROM discount WHERE discount_amount = 45);
-SET @discount_fifty_id = (SELECT id FROM discount WHERE discount_amount = 50);
-SET @discount_fifty_five_id = (SELECT id FROM discount WHERE discount_amount = 55);
-SET @discount_sixty_id = (SELECT id FROM discount WHERE discount_amount = 60);
-SET @discount_sixty_fiveid = (SELECT id FROM discount WHERE discount_amount = 65);
-SET @discount_seventy_id = (SELECT id FROM discount WHERE discount_amount = 70);
-SET @discount_seventy_five_id = (SELECT id FROM discount WHERE discount_amount = 75);
-SET @discount_eighty_id = (SELECT id FROM discount WHERE discount_amount = 80);
-SET @discount_eighty_five_id = (SELECT id FROM discount WHERE discount_amount = 85);
-SET @discount_ninety_id = (SELECT id FROM discount WHERE discount_amount = 90);
-SET @discount_ninety_five_id = (SELECT id FROM discount WHERE discount_amount = 95);
-SET @discount_one_hundred_id = (SELECT id FROM discount WHERE discount_amount = 100);
+-- SET @discount_zero_id = (SELECT id FROM discount WHERE discount_amount = 0);
+-- SET @discount_five_id = (SELECT id FROM discount WHERE discount_amount = 5);
+-- SET @discount_ten_id = (SELECT id FROM discount WHERE discount_amount = 10);
+-- SET @discount_fifteen_id = (SELECT id FROM discount WHERE discount_amount = 15);
+-- SET @discount_twenty_id = (SELECT id FROM discount WHERE discount_amount = 20);
+-- SET @discount_twenty_five_id = (SELECT id FROM discount WHERE discount_amount = 25);
+-- SET @discount_thirty_id = (SELECT id FROM discount WHERE discount_amount = 30);
+-- SET @discount_thirty_five_id = (SELECT id FROM discount WHERE discount_amount = 35);
+-- SET @discount_fourty_id = (SELECT id FROM discount WHERE discount_amount = 40);
+-- SET @discount_fourty_five_id = (SELECT id FROM discount WHERE discount_amount = 45);
+-- SET @discount_fifty_id = (SELECT id FROM discount WHERE discount_amount = 50);
+-- SET @discount_fifty_five_id = (SELECT id FROM discount WHERE discount_amount = 55);
+-- SET @discount_sixty_id = (SELECT id FROM discount WHERE discount_amount = 60);
+-- SET @discount_sixty_fiveid = (SELECT id FROM discount WHERE discount_amount = 65);
+-- SET @discount_seventy_id = (SELECT id FROM discount WHERE discount_amount = 70);
+-- SET @discount_seventy_five_id = (SELECT id FROM discount WHERE discount_amount = 75);
+-- SET @discount_eighty_id = (SELECT id FROM discount WHERE discount_amount = 80);
+-- SET @discount_eighty_five_id = (SELECT id FROM discount WHERE discount_amount = 85);
+-- SET @discount_ninety_id = (SELECT id FROM discount WHERE discount_amount = 90);
+-- SET @discount_ninety_five_id = (SELECT id FROM discount WHERE discount_amount = 95);
+-- SET @discount_one_hundred_id = (SELECT id FROM discount WHERE discount_amount = 100);
 
 SET @category_subcategory_id_category_phone_subcategory_smartphones = (SELECT id FROM  category_subcategory WHERE
                category_id = @category_phone_id AND subcategory_id = @subcategory_smartphones_id);
@@ -207,95 +209,98 @@ SET @currency_byn_id = (SELECT id FROM enum_currency WHERE description = 'BYN');
 
 INSERT INTO product (id, brand, model, characteristics, quantity, currency_id, currency_rate, price_with_vat,
                       price_selling, status_id, date_of_arrival, user_accepted_product_id,
-                     user_sale_product_id, category_subcategory_id, trade_point_id, sku, discount_id) VALUES
+                     user_sale_product_id, category_subcategory_id, trade_point_id, sku) VALUES
 
     (RANDOM_UUID(), 'Honor', 'x8c','8/256', 1, @currency_usd_id, '3.0', '199', '1092.90', @status_product_available_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_phone_subcategory_smartphones,
-     @trade_point_mazyrova_id, 'Телефоны-Смартфоны-Honor-x8c-8/256', @discount_zero_id),
+     @trade_point_mazyrova_id, 'Телефоны-Смартфоны-Honor-x8c-8/256'),
     (RANDOM_UUID(), 'Honor', 'x8c','8/256', 1, @currency_usd_id,'3.0', '300', '1092.90', @status_product_available_id, '2025-08-28 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_phone_subcategory_smartphones,
-     @trade_point_mazyrova_id, 'Телефоны-Смартфоны-Honor-x8c-8/256', @discount_zero_id),
+     @trade_point_mazyrova_id, 'Телефоны-Смартфоны-Honor-x8c-8/256'),
     (RANDOM_UUID(), 'Redmi', 'Note 14','4/128', 1, @currency_usd_id,'3.0', '300', '1092.90', @status_product_marriage_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_phone_subcategory_smartphones,
-     @trade_point_mazyrova_id, 'Телефоны-Смартфоны-Redmi-Note 14-4/128', @discount_zero_id),
+     @trade_point_mazyrova_id, 'Телефоны-Смартфоны-Redmi-Note 14-4/128' ),
     (RANDOM_UUID(), 'Maxvi', 'P24','', 1, @currency_usd_id,'3.0', '87', '174.90', @status_product_available_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_phone_subcategory_buttons,
-     @trade_point_mazyrova_id, 'Телефоны-Кнопки-Maxvi-P24- ', @discount_zero_id),
+     @trade_point_mazyrova_id, 'Телефоны-Кнопки-Maxvi-P24- ' ),
     (RANDOM_UUID(), 'Maxvi', 'P40','', 1, @currency_usd_id,'3.0', '74', '148.90', @status_product_marriage_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_phone_subcategory_buttons,
-     @trade_point_mazyrova_id, 'Телефоны-Кнопки-Maxvi-P40- ', @discount_zero_id),
+     @trade_point_mazyrova_id, 'Телефоны-Кнопки-Maxvi-P40- '),
     (RANDOM_UUID(), '', 'плёнка','', 1, @currency_usd_id,'3.0', '2', '15.00', @status_product_marriage_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_films_subcategory_glossy,
-     @trade_point_mazyrova_id, 'Плёнки--плёнка- ', @discount_zero_id),
+     @trade_point_mazyrova_id, 'Плёнки--плёнка- '),
     (RANDOM_UUID(), '', 'Honor','x5b Plus/x8b/x7c', 22, @currency_usd_id,'3.0', '5', '12.00', @status_product_available_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_glass_subcategory_null,
-     @trade_point_mazyrova_id, 'Стёкла-null-Honor-x5b Plus/x8b/x7c', @discount_zero_id),
+     @trade_point_mazyrova_id, 'Стёкла-null-Honor-x5b Plus/x8b/x7c'),
     (RANDOM_UUID(), '', 'Redmi','14C/NOTE 14 PRO/12', 15, @currency_usd_id,'3.0', '5', '12.00', @status_product_available_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_glass_subcategory_null,
-     @trade_point_mazyrova_id, 'Стёкла-null-Redmi-14C/NOTE 14 PRO/12', @discount_zero_id),
+     @trade_point_mazyrova_id, 'Стёкла-null-Redmi-14C/NOTE 14 PRO/12'),
     (RANDOM_UUID(), '', 'Samsung','A50/A55/23/56', 32, @currency_usd_id,'3.0', '5', '12.00', @status_product_available_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_glass_subcategory_null,
-     @trade_point_mazyrova_id, 'Стёкла-null-Samsung-A50/A55/23/56', @discount_zero_id),
+     @trade_point_mazyrova_id, 'Стёкла-null-Samsung-A50/A55/23/56'),
     (RANDOM_UUID(), '', 'Redmi','9A', 32, @currency_usd_id,'3.0', '5', '12.00', @status_product_available_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_glass_subcategory_null,
-     @trade_point_mazyrova_id, 'Стёкла-null-Redmi-9A', @discount_zero_id),
+     @trade_point_mazyrova_id, 'Стёкла-null-Redmi-9A'),
     (RANDOM_UUID(), '', 'IPhone','15Pro/14', 32, @currency_usd_id,'3.0', '9', '12.00', @status_product_available_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_glass_subcategory_null,
-     @trade_point_mazyrova_id, 'Стёкла-null-IPhone-15Pro/14', @discount_zero_id),
+     @trade_point_mazyrova_id, 'Стёкла-null-IPhone-15Pro/14'),
     (RANDOM_UUID(), 'IPhone', '16','8/256', 2, @currency_usd_id,'3.0', '1500', '5500', @status_product_available_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_phone_subcategory_smartphones,
-     @trade_point_mazyrova_id, 'Телефоны-Смартфоны-IPhone-16-8/256', @discount_zero_id),
+     @trade_point_mazyrova_id, 'Телефоны-Смартфоны-IPhone-16-8/256'),
     (RANDOM_UUID(), 'IPhone', '15','8/256', 2, @currency_usd_id,'3.0', '1400', '5000', @status_product_available_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_phone_subcategory_smartphones,
-     @trade_point_mazyrova_id, 'Телефоны-Смартфоны-IPhone-15-8/256', @discount_zero_id),
+     @trade_point_mazyrova_id, 'Телефоны-Смартфоны-IPhone-15-8/256'),
     (RANDOM_UUID(), 'IPhone', '15','6/512', 2, @currency_usd_id,'3.0', '1800', '6200', @status_product_available_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_phone_subcategory_smartphones,
-     @trade_point_mazyrova_id, 'Телефоны-Смартфоны-IPhone-15-6/512', @discount_zero_id),
+     @trade_point_mazyrova_id, 'Телефоны-Смартфоны-IPhone-15-6/512'),
     (RANDOM_UUID(), 'Redmi', '14C','4/128', 2, @currency_usd_id,'3.0', '150', '400', @status_product_available_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_phone_subcategory_smartphones,
-     @trade_point_mazyrova_id, 'Телефоны-Смартфоны-Redmi-14C-4/128', @discount_zero_id),
+     @trade_point_mazyrova_id, 'Телефоны-Смартфоны-Redmi-14C-4/128'),
     (RANDOM_UUID(), '', 'IPhone','16Pro', 32, @currency_usd_id,'3.0', '9', '12.00', @status_product_available_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_glass_subcategory_null,
-     @trade_point_mazyrova_id, 'Стёкла-null-IPhone-16Pro', @discount_zero_id),
+     @trade_point_mazyrova_id, 'Стёкла-null-IPhone-16Pro'),
     (RANDOM_UUID(), 'Honor', 'x5b Plus','4/128', 1, @currency_usd_id,'3.0', '200', '774.90', @status_product_examination_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_phone_subcategory_smartphones,
-     @trade_point_hataevicha_id, 'Телефоны-Смартфоны-Honor-x5b Plus-4/128', @discount_zero_id),
+     @trade_point_hataevicha_id, 'Телефоны-Смартфоны-Honor-x5b Plus-4/128'),
     (RANDOM_UUID(), 'Poco', 'C75','4/128', 1, @currency_usd_id,'3.0', '155', '600.90', @status_product_marriage_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_phone_subcategory_smartphones,
-    @trade_point_hataevicha_id, 'Телефоны-Смартфоны-Poco-C75-4/128', @discount_zero_id),
+    @trade_point_hataevicha_id, 'Телефоны-Смартфоны-Poco-C75-4/128'),
     (RANDOM_UUID(), 'Redmi', 'Note 14','4/128', 1, @currency_usd_id,'3.0', '205', '900.90', @status_product_marriage_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_phone_subcategory_smartphones,
-     @trade_point_hataevicha_id, 'Телефоны-Смартфоны-Redmi-Note 14-4/128', @discount_zero_id),
+     @trade_point_hataevicha_id, 'Телефоны-Смартфоны-Redmi-Note 14-4/128'),
     (RANDOM_UUID(), 'Maxvi', 'T100','', 1, @currency_byn_id,'3.0', '45', '90.90', @status_product_marriage_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_phone_subcategory_buttons,
-     @trade_point_hataevicha_id, 'Телефоны-Кнопки-Maxvi-T100- ', @discount_zero_id),
+     @trade_point_hataevicha_id, 'Телефоны-Кнопки-Maxvi-T100- '),
     (RANDOM_UUID(), 'Maxvi', 'T200','', 1, @currency_byn_id,'3.0', '53', '106.90', @status_product_examination_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_phone_subcategory_buttons,
-     @trade_point_hataevicha_id, 'Телефоны-Кнопки-Maxvi-T100- ', @discount_zero_id),
+     @trade_point_hataevicha_id, 'Телефоны-Кнопки-Maxvi-T100- '),
     (RANDOM_UUID(), '', 'плёнка','', 25, @currency_usd_id,'3.0', '2', '15.00', @status_product_marriage_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_films_subcategory_glossy,
-     @trade_point_hataevicha_id, 'Плёнки-плёнка- ', @discount_zero_id),
+     @trade_point_hataevicha_id, 'Плёнки-плёнка- '),
     (RANDOM_UUID(), '', 'плёнка','', 10, @currency_usd_id,'3.0', '2', '15.00', @status_product_available_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_films_subcategory_glossy,
-     @trade_point_hataevicha_id, 'Плёнки--плёнка- ', @discount_zero_id),
-    (RANDOM_UUID(), '', 'Honor','x5b Plus/x8b/x7c', 22, @currency_usd_id,'3.0', '5', '12.00', @status_product_available_id, '2025-08-29 15:08:38.451562',
+     @trade_point_hataevicha_id, 'Плёнки--плёнка- '),
+    (RANDOM_UUID(), 'Honor', 'x5b Plus/x8b/x7c','', 22, @currency_usd_id,'3.0', '5', '12.00', @status_product_available_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_glass_subcategory_null,
-     @trade_point_hataevicha_id, 'Стёкла-null-Honor-x5b Plus/x8b/x7c', @discount_zero_id),
+     @trade_point_hataevicha_id, 'СТЁКЛА- -HONOR-X5B PLUS/X8B/X7C'),
+    (RANDOM_UUID(), 'IPHONE', '17PRO','8/256', 1, @currency_usd_id,'3.2', '4', '999.99', @status_product_available_id, '2025-08-29 15:08:38.451562',
+     @user_slava_id, null, @category_subcategory_id_category_phone_subcategory_smartphones,
+     @trade_point_hataevicha_id, 'СТЁКЛА- -HONOR-X5B PLUS/X8B/X7C'),
     (RANDOM_UUID(), '', 'Redmi','14C/NOTE 14 PRO/12', 15, @currency_usd_id,'3.0', '5', '12.00', @status_product_available_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_glass_subcategory_null,
-     @trade_point_hataevicha_id, 'Стёкла-null-Redmi-14C/NOTE 14 PRO/12', @discount_zero_id),
+     @trade_point_hataevicha_id, 'Стёкла-null-Redmi-14C/NOTE 14 PRO/12'),
     (RANDOM_UUID(), '', 'Samsung','A50/A55/23/56', 32, @currency_usd_id,'3.0', '5', '12.00', @status_product_available_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_glass_subcategory_null,
-     @trade_point_hataevicha_id, 'Стёкла-null-Samsung-A50/A55/23/56', @discount_zero_id),
+     @trade_point_hataevicha_id, 'Стёкла-null-Samsung-A50/A55/23/56'),
     (RANDOM_UUID(), '', 'Redmi','9A', 32, @currency_usd_id,'3.0', '5', '12.00', @status_product_available_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_glass_subcategory_null,
-     @trade_point_hataevicha_id, 'Стёкла-null-Redmi-9A', @discount_zero_id),
+     @trade_point_hataevicha_id, 'Стёкла-null-Redmi-9A'),
     (RANDOM_UUID(), '', 'IPhone','15Pro/14', 32, @currency_usd_id,'3.0', '9', '12.00', @status_product_available_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_glass_subcategory_null,
-     @trade_point_hataevicha_id, 'Стёкла-null-IPhone-15Pro/14', @discount_zero_id),
+     @trade_point_hataevicha_id, 'Стёкла-null-IPhone-15Pro/14'),
     (RANDOM_UUID(), '', 'IPhone','16Pro', 32, @currency_usd_id,'3.0', '9', '12.00', @status_product_available_id, '2025-08-29 15:08:38.451562',
      @user_slava_id, null, @category_subcategory_id_category_glass_subcategory_null,
-     @trade_point_hataevicha_id, 'Стёкла-null-IPhone-16Pro', @discount_zero_id);
+     @trade_point_hataevicha_id, 'Стёкла-null-IPhone-16Pro');
 
 
 

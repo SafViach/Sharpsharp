@@ -8,9 +8,13 @@ import com.sharp.sharpshap.enums.EnumStatusProduct;
 import java.time.LocalDateTime;
 
 import com.sharp.sharpshap.exceptions.CategoryNotFoundException;
+import com.sharp.sharpshap.exceptions.ProductException;
 import com.sharp.sharpshap.exceptions.ProductNotFoundException;
 import com.sharp.sharpshap.exceptions.SubcategoryNotFoundException;
 import com.sharp.sharpshap.repository.*;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -25,9 +29,9 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ProductService {
+    private final ProductChangeRequestRepository productChangeRequestRepository;
     private final UtilGenerateSKUService utilGenerateSKUService;
     private final CategorySubcategoryService categorySubcategoryService;
-    private final DiscountService discountService;
     private final StatusProductService statusProductService;
     private final UserService userService;
     private final SubcategoryRepository subcategoryRepository; //  : (
@@ -36,19 +40,25 @@ public class ProductService {
     private final TradePointService tradePointService;
     private final CurrencyService currencyService;
     private final ProductChangeRequestService productChangeRequestService;
-    private final String NAME_STATUS_PENDING_APPROVAL = "PENDING_APPROVAL";
     private final static Logger logger = LoggerFactory.getLogger(ProductService.class);
     private final String STATUS_PRODUCT_AVAILABLE = "AVAILABLE";
-    private final String STATUS_PRODUCT_PENDING_APPROVAL = "PENDING_APPROVAL";
+    private final String STATUS_PRODUCT_PENDING = "PENDING";
+    private final String STATUS_PRODUCT_REMOVABLE = "REMOVABLE";
+    private final String STATUS_PRODUCT_CANCEL = "CANCEL";
+    private final String STATUS_PRODUCT_EXAMINATION = "EXAMINATION";
+    private final String STATUS_PRODUCT_MOVING = "MOVING";
+    private final int MAX_PAGE_SIZE_PAGEABLE = 25;
+    private final int MIN_PAGE_SIZE_PAGEABLE = 1;
+
 
     @Transactional(isolation = Isolation.READ_COMMITTED)
-    public void createdProduct(ProductCreateDTO productCreateDTO, UUID uuidCategory,
-                               UUID uuidSubcategory, UUID uuidUser, UUID uuidTradePoint) {
+    public void createdProduct(ProductCreateDTO productCreateDTO,
+                               UUID uuidCategory,
+                               UUID uuidSubcategory,
+                               UUID uuidUser,
+                               UUID uuidTradePoint) {
         logger.info("ProductService: ---createdProduct добавление продукта");
         Product product = new Product();
-
-        logger.info("ProductService: ---createdProduct discountService.getByAmountDiscount(BigDecimal.ZERO);");
-        Discount discount = discountService.getByAmountDiscount(BigDecimal.ZERO);
 
         logger.info("ProductService: ---createdProduct categoryService.getCategoryById(categoryUUID);");
         Category category = categoryRepository.findById(uuidCategory).orElseThrow(() ->
@@ -74,7 +84,7 @@ public class ProductService {
         TradePoint tradePoint = tradePointService.getByIdTradePoint(uuidTradePoint);
         logger.info("ProductService: ---createdProduct продукт добавляется на точку :" + tradePoint.getName());
 
-        EnumStatusProduct statusProduct = statusProductService.findByName(NAME_STATUS_PENDING_APPROVAL);
+        EnumStatusProduct statusProduct = statusProductService.findByName(STATUS_PRODUCT_EXAMINATION);
         logger.info("ProductService: ---createdProduct присваеваем статус продукту : " + statusProduct.getStatus());
 
         CategorySubcategory categorySubcategory = new CategorySubcategory();
@@ -114,9 +124,6 @@ public class ProductService {
 
         product.setTradePoint(tradePoint);
         logger.info("ProductService: ---createdProduct присваиваю товару точку : " + tradePoint.getName());
-
-        product.setDiscount(discount);
-        logger.info("ProductService: ---createdProduct присваиваю скидку товару : " + discount.getDiscountAmount());
 
 
         categorySubcategory = categorySubcategoryService.getByCategoryAndSubcategory(category, subcategory);
@@ -170,238 +177,362 @@ public class ProductService {
         return productRepository.existsByCategorySubcategory_Subcategory_Id(subcategory.getId());
     }
 
+    private int checkPageSize(int pageSize) {
+        // Ограничиваем максимальный и минимальный размер, чтобы избежать DoS
+        if (pageSize > MAX_PAGE_SIZE_PAGEABLE) pageSize = MAX_PAGE_SIZE_PAGEABLE;
+        if (pageSize < MIN_PAGE_SIZE_PAGEABLE) pageSize = MIN_PAGE_SIZE_PAGEABLE;
+        return pageSize;
+    }
+
     @Transactional
-    public List<ResponseProductDTO> getProductsByUuidTradePoints(UUID uuidTradePoint) {
-        logger.info("ProductService: --- getProductsByUuidTradePoints");
-        logger.info("ProductService: --- getProductsByUuidTradePoints получаем торговую точку");
+    public ResponseProductSlice getProductsByUuidTradePoint(UUID uuidTradePoint,
+                                                            UUID uuidProductAfter,
+                                                            int pageSize) {
+        pageSize = checkPageSize(pageSize);
+
         TradePoint tradePoint = tradePointService.getByIdTradePoint(uuidTradePoint);
-        logger.info("ProductService: --- getProductsByUuidTradePoints получаем статус");
-        EnumStatusProduct status = statusProductService.findByName("AVAILABLE");
-        logger.info("ProductService: --- getProductsByUuidTradePoints фильтруем список продутов по тороговой точке и по статусу");
-        List<Product> productsDTOList = productRepository.findByTradePointAndStatusProduct(tradePoint, status);
-        logger.info("ProductService: --- getProductsByUuidTradePoints преобразуем список");
-        List<ResponseProductDTO> responseProductDTOS = productsDTOList
-                .stream()
-                .map(product -> toInResponseProductDTO(product))
-                .collect(Collectors.toList());
-        return responseProductDTOS;
+        EnumStatusProduct status = statusProductService.findByName(STATUS_PRODUCT_AVAILABLE);
+        logger.info("ProductService: --- getProductsByUuidTradePoints получаем список продуктов по торговой точке: "
+                + tradePoint.getName() + " фильтруя по статусу " + STATUS_PRODUCT_AVAILABLE);
+
+        Pageable pageable = PageRequest.of(0, pageSize, Sort.by("id").ascending());
+
+        List<Product> products = productRepository.filterByTradePointAndStatusForPageable(status, tradePoint, uuidProductAfter, pageable);
+
+        boolean hasNext = products.size() > pageSize;
+        if (hasNext) {
+            // Убираем лишний элемент
+            products = products.subList(0, pageSize);
+        }
+
+
+        List<ResponseOfTheProductFoundDTO> productFoundDTO = products.stream()
+                .map(product -> ResponseOfTheProductFoundDTO.toResponseOfTheProductFoundDTO(product))
+                .toList();
+        return new ResponseProductSlice(productFoundDTO, hasNext);
     }
 
-    public ResponseProductDTO toInResponseProductDTO(Product product) {
-        logger.info("ProductService: ---transInResponseProductDTO :  преобразуем в  DTO");
-        return new ResponseProductDTO(
-                product.getId(),
-                Optional.ofNullable(product.getBrand()).orElse(""),
-                Optional.ofNullable(product.getModel()).orElse(""),
-                Optional.ofNullable(product.getCharacteristics()).orElse(""),
-                product.getQuantity(),
-                Optional.ofNullable(product.getCurrency())
-                        .map(EnumCurrency::getDescription)
-                        .orElse(""),
-                product.getCurrencyRate(),
-                Optional.ofNullable(product.getStatusProduct())
-                        .map(EnumStatusProduct::getStatus)
-                        .orElse(""),
-                Optional.ofNullable(product.getCategorySubcategory())
-                        .map(CategorySubcategory::getCategory)
-                        .map(Category::getName)
-                        .orElse(""),
-                Optional.ofNullable(product.getCategorySubcategory())
-                        .map(CategorySubcategory::getSubcategory)
-                        .map(Subcategory::getName)
-                        .orElse(""),
-                product.getPriceWithVat(),
-                product.getPriceSelling(),
-                Optional.ofNullable(product.getUserAcceptedProduct())
-                        .map(user ->
-                                Optional.ofNullable(user.getFirstName()).orElse("") + " " +
-                                        Optional.ofNullable(user.getLastName()).orElse("")
-                        )
-                        .orElse(""),
-                product.getSku());
-    }
 
-    private Product getProductByUuid(UUID uuidProduct) {
+    public Product getProductByUuid(UUID uuidProduct) {
         return productRepository.findById(uuidProduct).orElseThrow(() -> new ProductNotFoundException("Продукт по uuid не найден"));
     }
 
     public ResponseProductDTO getResponseProductDTOByUuid(UUID uuidProduct) {
-        return toInResponseProductDTO(getProductByUuid(uuidProduct));
+        return ResponseProductDTO.toInResponseProductDTO(getProductByUuid(uuidProduct));
     }
 
 
-    public List<ResponseOfTheProductFoundDTO> getProductsByUuidTradePointNoAssignmentTradePointForUser(UUID uuidTradePoint) {
+    public ResponseProductSlice getProductsByUuidTradePointNoAssignmentTradePointForUser(UUID uuidTradePoint,
+                                                                                         UUID uuidProductAfter,
+                                                                                         int pageSize) {
+        pageSize = checkPageSize(pageSize);
+
         TradePoint tradePoint = tradePointService.getByIdTradePoint(uuidTradePoint);
-        logger.info("ProductService: getProductsByUuidTradePointNoAssignmentTradePointForUser получение продуктов на точке: " + tradePoint.getName() +
-                "без присвоения пользователю данной точки");
-        List<Product> productList = productRepository.findAll();
-        return toResponseOfTheProductFoundDTO(filterProductsByStatusAndUuidTradePoint(productList, uuidTradePoint));
+        logger.info("ProductService: getProductsByUuidTradePointNoAssignmentTradePointForUser получение продуктов на точке: " +
+                tradePoint.getName() + "без присвоения пользователю данной точки");
+        // Запрашиваем на 1 элемент больше, чтобы определить hasNext
+        Pageable pageable = PageRequest.of(0, pageSize + 1, Sort.by("id").ascending());
+        EnumStatusProduct status = statusProductService.findByName(STATUS_PRODUCT_AVAILABLE);
+        List<Product> products = productRepository.filterByTradePointAndStatusForPageable(status, tradePoint, uuidProductAfter, pageable);
+
+        boolean hasNext = products.size() > pageSize;
+        if (hasNext) {
+            // Убираем лишний элемент
+            products = products.subList(0, pageSize);
+        }
+        List<ResponseOfTheProductFoundDTO> productFoundDTO = products.stream()
+                .map(product -> ResponseOfTheProductFoundDTO.toResponseOfTheProductFoundDTO(product))
+                .toList();
+        return new ResponseProductSlice(productFoundDTO, hasNext);
     }
 
     @Transactional
-    public List<ResponseOfTheProductFoundDTO> searchByLine(RequestProductSearchDTO productSearchDTO, UUID uuidTradePoint) {
-        tradePointService.getByIdTradePoint(uuidTradePoint);
+    public ResponseProductSlice searchByLine(RequestProductSearchDTO productSearchDTO,
+                                             UUID uuidTradePoint,
+                                             UUID uuidProductAfter,
+                                             int pageSize) {
+        logger.info("ProductService: searchByLine ");
+        TradePoint tradePoint = tradePointService.getByIdTradePoint(uuidTradePoint);
+        EnumStatusProduct status = statusProductService.findByName(STATUS_PRODUCT_AVAILABLE);
+
+        pageSize = checkPageSize(pageSize);
+
+
         String line = productSearchDTO.getLineSearch();
-        List<ResponseOfTheProductFoundDTO> resultRequest;
 
         String cleaner = line.trim().toLowerCase();
         String[] parts = cleaner.split("\\s+");
         logger.info("ProductService: searchByLine Начинаем поиск продукта по подстрокам из " + parts.length + " ед.");
+        // Запрашиваем на 1 элемент больше, чтобы определить hasNext
+        Pageable pageable = PageRequest.of(0, pageSize + 1, Sort.by("id").ascending());
+
         if (parts.length == 1) {
             logger.info("ProductService: searchByLine parts.length == 1 " + parts[0]);
-            resultRequest = toResponseOfTheProductFoundDTO(
-                    filterProductsByStatusAndUuidTradePoint(productRepository.searchBySkuKeyword(parts[0]), uuidTradePoint));
-            return resultRequest;
+            List<Product> products = productRepository.filterByTradePointAndStatusForSearchBySkuKeyword(
+                    status,
+                    tradePoint,
+                    parts[0],
+                    uuidProductAfter,
+                    pageable);
+
+            return correctionListProduct(products, pageSize);
+
         } else if (parts.length == 2) {
             logger.info("ProductService: searchByLine parts.length == 2 " + parts[0] + " " + parts[1]);
-            return toResponseOfTheProductFoundDTO(
-                    filterProductsByStatusAndUuidTradePoint(productRepository.searchByTwoParts(parts[0], parts[1]), uuidTradePoint));
+            List<Product> products = productRepository.filterByTradePointAndStatusForSearchByTwoParts(
+                    status,
+                    tradePoint,
+                    parts[0],
+                    parts[1],
+                    uuidProductAfter,
+                    pageable);
+
+            return correctionListProduct(products, pageSize);
+
         } else if (parts.length == 3) {
             logger.info("ProductService: searchByLine parts.length == 3 " + parts[0] + " " + parts[1] + " " + parts[2]);
-            return toResponseOfTheProductFoundDTO(
-                    filterProductsByStatusAndUuidTradePoint(productRepository.searchByThreeParts(parts[0], parts[1], parts[2]), uuidTradePoint));
+            List<Product> products = productRepository.filterByTradePointAndStatusForSearchByThreeParts(
+                    status,
+                    tradePoint,
+                    parts[0],
+                    parts[1],
+                    parts[2],
+                    uuidProductAfter,
+                    pageable);
+
+            return correctionListProduct(products, pageSize);
+
         } else if (parts.length == 4) {
             logger.info("ProductService: searchByLine parts.length == 4 " + parts[0] + " " + parts[1] + " " + parts[2] + " " + parts[3]);
-            return toResponseOfTheProductFoundDTO(
-                    filterProductsByStatusAndUuidTradePoint(productRepository.searchByFourParts(parts[0], parts[1], parts[2], parts[3]), uuidTradePoint));
+            List<Product> products = productRepository.filterByTradePointAndStatusForSearchByFourParts(
+                    status,
+                    tradePoint,
+                    parts[0],
+                    parts[1],
+                    parts[2],
+                    parts[3],
+                    uuidProductAfter,
+                    pageable);
+
+            return correctionListProduct(products, pageSize);
+
         } else if (parts.length >= 5) {
             logger.info("ProductService: searchByLine parts.length == 5 " + parts[0] + " " + parts[1] + " " + parts[2] + " " + parts[3] + " " + parts[4]);
-            return toResponseOfTheProductFoundDTO(
-                    filterProductsByStatusAndUuidTradePoint(productRepository.searchByFiveParts(parts[0], parts[1], parts[2], parts[3], parts[4]),
-                            uuidTradePoint));
+            List<Product> products = productRepository.filterByTradePointAndStatusForSearchByFiveParts(
+                    status,
+                    tradePoint,
+                    parts[0],
+                    parts[1],
+                    parts[2],
+                    parts[3],
+                    parts[4],
+                    uuidProductAfter,
+                    pageable);
+
+            return correctionListProduct(products, pageSize);
+
         }
-        resultRequest = toResponseOfTheProductFoundDTO(
-                filterProductsByStatusAndUuidTradePoint(productRepository.searchBySkuKeyword(productSearchDTO.getLineSearch()), uuidTradePoint));
-        return resultRequest;
+        List<Product> products = productRepository.filterByTradePointAndStatusForSearchBySkuKeyword(
+                status,
+                tradePoint,
+                parts[0],
+                uuidProductAfter,
+                pageable);
+
+
+        return correctionListProduct(products, pageSize);
     }
 
-    @Transactional
-    public List<Product> filterProductsByStatusAndUuidTradePoint(UUID uuidTradePoint) {
-        EnumStatusProduct status = statusProductService.findByName("AVAILABLE");
-        TradePoint tradePoint = tradePointService.getByIdTradePoint(uuidTradePoint);
-        logger.info("ProductService:  filterProductsByStatusAndUuidProduct фильтруем список по статусу: " + status +
-                " и по торговой точке: ");
-        return productRepository.findByTradePointAndStatusProduct(tradePoint, status);
+    private ResponseProductSlice correctionListProduct(List<Product> products, int pageSize) {
+        boolean hasNext = false;
+        hasNext = products.size() > pageSize;
+        if (hasNext) {
+            // Убираем лишний элемент
+            products = products.subList(0, pageSize);
+        }
+        List<ResponseOfTheProductFoundDTO> productFoundDTO = products.stream()
+                .map(product -> ResponseOfTheProductFoundDTO.toResponseOfTheProductFoundDTO(product))
+                .toList();
+        return new ResponseProductSlice(productFoundDTO, hasNext);
     }
 
-    private List<Product> filterProductsByStatusAndUuidTradePoint(List<Product> products, UUID uuidTradePoint) {
-        EnumStatusProduct status = statusProductService.findByName("AVAILABLE");
-        TradePoint tradePoint = tradePointService.getByIdTradePoint(uuidTradePoint);
-        logger.info("ProductService:  filterProductsByStatusAndUuidProduct фильтруем список по статусу: " + status +
-                " и по торговой точке: ");
-        return products.stream()
-                .filter(product -> product.getStatusProduct().getStatus().equals(status.getStatus()) &&
-                        product.getTradePoint().getId().equals(tradePoint.getId()))
-                .collect(Collectors.toList());
-    }
-
-    private List<ResponseOfTheProductFoundDTO> toResponseOfTheProductFoundDTO(List<Product> products) {
-        logger.info("ProductService:  toResponseOfTheProductFoundDTO преобразуем в DTO: ");
-        return products.stream().map(product -> new ResponseOfTheProductFoundDTO(
-                product.getId(),
-                Optional.ofNullable(product.getBrand()).orElse(""),
-                Optional.ofNullable(product.getModel()).orElse(""),
-                Optional.ofNullable(product.getCharacteristics()).orElse(""),
-                product.getQuantity()
-        )).collect(Collectors.toList());
-    }
-
-
-    @Transactional
-    public void productChange(UUID uuidProduct, UUID uuidUser, UUID uuidTradePoint, ProductChangeDTO productChangeDTO) {
-        logger.info("ProductService:  productChange");
+    public void productChange(UUID uuidProduct,
+                              UUID uuidUser,
+                              UUID uuidTradePoint,
+                              ProductChangeDTO productChangeDTO) {
+        logger.info("ProductService:  productChange изменение продукта");
         Product product = getProductByUuid(uuidProduct);
         logger.info("ProductService:  productChange получили прорукт изменяемый: " + product.getSku());
-        logger.info("ProductService:  productChange получили прорукт изменяемый product.getVersion(): "
-                + product.getVersion());
-        logger.info("ProductService:  productChange получили прорукт изменяемый product.getStatusProduct(): "
-                + product.getStatusProduct());
-        logger.info("ProductService:  productChange получили прорукт изменяемый product.getId(): "
-                + product.getId());
-        logger.info("ProductService:  productChange получили прорукт изменяемый product.getCurrency().getDescription(): "
-                + product.getCurrency().getDescription());
-
 
         User user = userService.getUserById(uuidUser);
         logger.info("ProductService:  productChange получили пользователя: " + user.getFirstName() + " " + user.getLastName());
+
         EnumCurrency currency = currencyService.getById(productChangeDTO.getUuidCurrency());
         logger.info("ProductService:  productChange получили курс: " + currency.getDescription());
+
         TradePoint tradePoint = tradePointService.getByIdTradePoint(uuidTradePoint);
         logger.info("ProductService:  productChange получили торговую точку: " + tradePoint.getName());
+
         Category category = categoryRepository.findById(productChangeDTO.getUuidCategory()).orElseThrow(() ->
                 new CategoryNotFoundException("CategoryService: ---getCategoryById Такой категории не найдено"));
         logger.info("ProductService:  productChange получили категорию: " + category.getName());
+
         Subcategory subcategory = subcategoryRepository.findById(productChangeDTO.getUuidSubcategory()).orElseThrow(() ->
                 new SubcategoryNotFoundException("SubcategoryService: ---getSubcategoryByUuid " +
                         "подкатегория по UUID не найдена в БД"));
+
         logger.info("ProductService:  productChange получили подкатегорию если имеется: " +
-                Optional.ofNullable(subcategory.getName()).orElse("null"));
+                Optional.ofNullable(subcategory.getName()).orElse(" "));
+
         CategorySubcategory categorySubcategory = categorySubcategoryService.getByCategoryAndSubcategory(category, subcategory);
         logger.info("ProductService:  productChange получили связь категория - подкатегория: " +
                 categorySubcategory.getCategory().getName() + " " +
-                Optional.ofNullable(categorySubcategory.getSubcategory().getName()).orElse("null"));
-//        logger.info("ProductService:  productChange изменяем продукт : "
-//                + product.getBrand() + "/n"
-//                + product.getModel() + "/n"
-//                + product.getCharacteristics() + "/n"
-//                + product.getQuantity() + "/n"
-//                + product.getCurrency().getDescription() + "/n"
-//                + product.getCurrency().getRate() + "/n"
-//                + product.getPriceWithVat() + "/n"
-//                + product.getPriceSelling() + "/n"
-//                + product.getStatusProduct().getStatus() + "/n"
-//                + product.getDateOfArrival() + "/n"
-//                + product.getUserAcceptedProduct() + "/n"
-//                + product.getUserSaleProduct() + "/n"
-//                + product.getCategorySubcategory().getCategory() + "/n"
-//                + product.getCategorySubcategory().getSubcategory() + "/n"
-//                + product.getTradePoint().getName() + "/n"
-//                + product.getSku())
-//        ;
+                Optional.ofNullable(categorySubcategory.getSubcategory().getName()).orElse(" "));
+
         logger.info("ProductService:  productChange прежде чем изменять сохраняем в базу новые значения для " +
                 "продукта в случае отката ");
         productChangeRequestService.save(productChangeDTO, product, user, tradePoint, currency, categorySubcategory);
-        setStatusProductByNameAndSave(STATUS_PRODUCT_PENDING_APPROVAL, product);
+        setStatusProductByNameAndSave(STATUS_PRODUCT_PENDING, product);
     }
 
-    @Transactional
-    public Product setStatusProductByNameAndSave(String nameStatus, Product product) {
-        logger.info("ProductService:  setStatusProductByNameAndSave " +
-                "после сохранения устанавливаем статус продукту : PENDING_APPROVAL");
-        logger.info("ProductService:  setStatusProductByNameAndSave получили прорукт изменяемый: " + product.getSku());
-        logger.info("ProductService:  setStatusProductByNameAndSave получили прорукт изменяемый: " + product);
-        logger.info("ProductService:  setStatusProductByNameAndSave получили прорукт изменяемый product.getVersion(): "
-                + product.getVersion());
-        logger.info("ProductService:  setStatusProductByNameAndSave получили прорукт изменяемый product.getStatusProduct(): "
-                + product.getStatusProduct());
-        logger.info("ProductService:  setStatusProductByNameAndSave получили прорукт изменяемый product.getId(): "
-                + product.getId());
-        logger.info("ProductService:  setStatusProductByNameAndSave получили прорукт изменяемый product.getCurrency().getDescription(): "
-                + product.getCurrency().getDescription());
+
+    public Product setStatusProductByNameAndSave(String nameStatus,
+                                                 Product product) {
         EnumStatusProduct statusProduct = statusProductService.findByName(nameStatus);
         product.setStatusProduct(statusProduct);
-        logger.info("ProductService:  setStatusProductByNameAndSave получили прорукт изменяемый: " + product.getSku());
-        logger.info("ProductService:  setStatusProductByNameAndSave получили прорукт изменяемый: " + product);
-        logger.info("ProductService:  setStatusProductByNameAndSave получили прорукт изменяемый product.getVersion(): "
-                + product.getVersion());
-        logger.info("ProductService:  setStatusProductByNameAndSave получили прорукт изменяемый product.getStatusProduct(): "
-                + product.getStatusProduct());
-        logger.info("ProductService:  setStatusProductByNameAndSave получили прорукт изменяемый product.getId(): "
-                + product.getId());
-        logger.info("ProductService:  setStatusProductByNameAndSave получили прорукт изменяемый product.getCurrency().getDescription(): "
-                + product.getCurrency().getDescription());
+        logger.info("ProductService:  setStatusProductByNameAndSave продукту: " + product.getSku() + " именяем статус "
+                + product.getStatusProduct().getStatus() + " на " + nameStatus + " и сохраняем");
+
         return productRepository.save(product);
     }
 
     //написать метод который возвращает список новых товаров в заявки
-    @Transactional
     public List<ResponseProductDTO> getNewProductsDTOForApplications() {
-        EnumStatusProduct statusProduct = statusProductService.findByName(STATUS_PRODUCT_PENDING_APPROVAL);
-        List<Product> products = productRepository.findByStatusProduct(statusProduct);
+        logger.info("ProductService:  getNewProductsDTOForApplications получение товаров статуса " +
+                STATUS_PRODUCT_EXAMINATION + "- в ожидании одобрения");
+        EnumStatusProduct statusProductExamination = statusProductService.findByName(STATUS_PRODUCT_EXAMINATION);
+        List<EnumStatusProduct> statusProduct = List.of(statusProductExamination);
+        List<Product> products = productRepository.findByStatusProductIn(statusProduct);
         List<ResponseProductDTO> productDTOS = products.stream()
-                .map(product -> toInResponseProductDTO(product))
+                .map(product -> ResponseProductDTO.toInResponseProductDTO(product))
                 .collect(Collectors.toList());
         return productDTOS;
     }
+
+    //написать метод который возвращает список новых товаров в заявки для user
+    public List<ResponseProductDTO> getApplicationsNewProductFilteredByTradePointAndStatusProductDTO(UUID uuidTradePoint) {
+        TradePoint tradePoint = tradePointService.getByIdTradePoint(uuidTradePoint);
+        EnumStatusProduct statusProductCancel = statusProductService.findByName(STATUS_PRODUCT_CANCEL);
+        EnumStatusProduct statusProductExamination = statusProductService.findByName(STATUS_PRODUCT_EXAMINATION);
+        EnumStatusProduct statusProductMoving = statusProductService.findByName(STATUS_PRODUCT_MOVING);
+        List<EnumStatusProduct> statusProduct = List.of(statusProductCancel, statusProductExamination, statusProductMoving);
+        logger.info("ProductService:  getApplicationsNewProductFilteredByTradePointAndStatusProductDTO получение " +
+                "товаров статуса: " + STATUS_PRODUCT_CANCEL + " + " + STATUS_PRODUCT_EXAMINATION + " + "
+                + STATUS_PRODUCT_MOVING + " соответствующей точке: " + tradePoint.getName()
+        );
+
+        List<Product> products = productRepository.findByStatusProductInAndTradePoint(statusProduct, tradePoint);
+        List<ResponseProductDTO> productDTOS = products.stream()
+                .map(product -> ResponseProductDTO.toInResponseProductDTO(product))
+                .collect(Collectors.toList());
+        return productDTOS;
+    }
+
+    public void acceptNewProduct(UUID uuidProduct) {
+        Product product = getProductByUuid(uuidProduct);
+        logger.info("ProductService:  acceptNewProduct товар :" + product.getSku() + "одобрен администратором");
+        setStatusProductByNameAndSave(STATUS_PRODUCT_AVAILABLE, product);
+    }
+
+    //создать метод для администратора который при отказе добавления нового продукта пользователем изменят статус
+    //продукту на "CANCEL"
+    public void cancelAddNewProduct(UUID uuidProduct) {
+        Product product = getProductByUuid(uuidProduct);
+        logger.info("ProductService:  cancelAddNewProduct товар: " + product.getSku());
+        setStatusProductByNameAndSave(STATUS_PRODUCT_CANCEL, product);
+    }
+
+    public void cancelRemovableProduct(Product product) {
+        logger.info("ProductService:  cancelRemovableProduct в связи с отменой заявки на удаление продукта : "
+                + product.getSku() + " возобновляем продукту статус: " + STATUS_PRODUCT_AVAILABLE);
+        setStatusProductByNameAndSave(STATUS_PRODUCT_AVAILABLE, product);
+    }
+
+    //добавить метод который удаляет новую заявку пользователя добавления нового товара
+    public void deleteApplicationProduct(UUID uuidProduct) {
+        Product product = getProductByUuid(uuidProduct);
+        logger.info("ProductService:  deleteApplicationProduct удаление товара: " + product.getSku());
+        if (product.getStatusProduct().getStatus().equals(STATUS_PRODUCT_EXAMINATION)) {
+            productRepository.delete(product);
+        } else {
+            throw new ProductException("Удаление не возможно статус не равен " + STATUS_PRODUCT_EXAMINATION);
+        }
+    }
+
+    @Transactional
+    public void sendToAnotherTradePoint(UUID uuidProduct, UUID uuidTradePoint) {
+        Product product = getProductByUuid(uuidProduct);
+        TradePoint tradePoint = tradePointService.getByIdTradePoint(uuidTradePoint);
+
+        if (tradePoint.getName().equals(product.getTradePoint().getName())) {
+            throw new ProductException("ошибка : данный продукт принадележит данной точке");
+        }
+        logger.info("ProductService:  sendToAnotherTradePoint отправляем продукт : " + product.getSku()
+                + " на торговую точку: " + tradePoint.getName());
+        EnumStatusProduct statusProductPending = statusProductService.findByName(STATUS_PRODUCT_PENDING);
+        EnumStatusProduct statusProductMoving = statusProductService.findByName(STATUS_PRODUCT_MOVING);
+
+        product.setStatusProduct(statusProductPending);
+
+        ProductChangeRequest productChangeRequest = productToProductChangeRequest(product);
+
+        productChangeRequest.setStatusProduct(statusProductMoving);
+        productChangeRequest.setTradePoint(tradePoint);
+
+        productChangeRequestService.save(productChangeRequest);
+        productRepository.save(product);
+    }
+    private ProductChangeRequest productToProductChangeRequest(Product product){
+        ProductChangeRequest productChangeRequest = new ProductChangeRequest();
+
+        productChangeRequest.setProduct(product);
+        productChangeRequest.setBrand(Optional.ofNullable(product.getBrand()).orElse(" "));
+        productChangeRequest.setModel(Optional.ofNullable(product.getModel()).orElse(" "));
+        productChangeRequest.setCharacteristics(Optional.ofNullable(product.getCharacteristics())
+                .orElse(" "));
+        productChangeRequest.setQuantity(product.getQuantity());
+        productChangeRequest.setCurrency(product.getCurrency());
+        productChangeRequest.setCurrencyRate(product.getCurrencyRate());
+        productChangeRequest.setPriceWithVat(product.getPriceWithVat());
+        productChangeRequest.setPriceSelling(product.getPriceSelling());
+        productChangeRequest.setStatusProduct(product.getStatusProduct());
+        productChangeRequest.setCategorySubcategory(product.getCategorySubcategory());
+        productChangeRequest.setSku(product.getSku());
+        productChangeRequest.setUser(product.getUserAcceptedProduct());
+        productChangeRequest.setTradePoint(product.getTradePoint());
+
+        return productChangeRequest;
+    }
+    @Transactional
+    public void deleteProduct(UUID uuidProduct){
+        Product product = getProductByUuid(uuidProduct);
+        logger.info("ProductService:  deleteProduct удаление продукта администратором: " + product.getSku());
+        productRepository.delete(product);
+    }
+    @Transactional
+    public void deleteProductForUser(UUID uuidProduct , UUID uuidUser){
+        Product product = getProductByUuid(uuidProduct);
+        User user = userService.getUserById(uuidUser);
+        logger.info("ProductService:  deleteProduct удаление продукта: " + product.getSku() + " пользователем: "
+                + user.getFirstName() + " " + user.getLastName());
+        ProductChangeRequest productChangeRequest = productToProductChangeRequest(product);
+        EnumStatusProduct statusProductRemovable = statusProductService.findByName(STATUS_PRODUCT_REMOVABLE);
+        productChangeRequest.setStatusProduct(statusProductRemovable);
+        productChangeRequest.setUser(user);
+        setStatusProductByNameAndSave(STATUS_PRODUCT_PENDING , product);
+        productRepository.save(product);
+        productChangeRequestRepository.save(productChangeRequest);
+    }
+
 
 }

@@ -64,10 +64,6 @@ public class Product {
 
     private String sku;
 
-    @ManyToOne
-    @JoinColumn(name = "discount_id")
-    private Discount discount;
-
     @Version
-    private Integer version;
+    private Integer version = 0;
 }

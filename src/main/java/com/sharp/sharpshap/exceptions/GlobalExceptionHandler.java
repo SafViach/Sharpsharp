@@ -2,6 +2,7 @@ package com.sharp.sharpshap.exceptions;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.sharp.sharpshap.error.ErrorResponse;
+import lombok.EqualsAndHashCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -41,6 +42,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handlerGeneralException(Exception exception) {
+        exception.printStackTrace();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("ошибка сервера :" + exception.getMessage());
     }
 
@@ -107,6 +109,7 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(CreateProductException.class)
     public ResponseEntity<String>errorCreateProduct(CreateProductException exception){
+        exception.printStackTrace();
         logger.error("GlobalExceptionHandler: errorCreateProduct(CreateProductException  ~~Отмена создания продукта"
                 + exception.getMessage());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(exception.getMessage());
@@ -114,12 +117,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<String> handleHttpMessageNotReadable(HttpMessageNotReadableException ex) {
+        ex.printStackTrace();
         Throwable cause = ex.getCause();
 
         if (cause instanceof InvalidFormatException ife) {
             Class<?> targetType = ife.getTargetType();
 
             if (targetType != null && targetType == java.math.BigDecimal.class) {
+                ex.printStackTrace();
                 return ResponseEntity.badRequest().body(String.format(
                         "{\"error\": \"Значение "+ ife.getValue() +" не является допустимым числом. Ожидалось число \"}"
                 ));
@@ -132,7 +137,18 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(ProductChangeRequestNotFoundException.class)
     public ResponseEntity<String>errorFound(ProductChangeRequestNotFoundException exception){
+        exception.printStackTrace();
         logger.error("ProductChangeRequestNotFoundException: errorFound(DeleteException  ~~нет в БД" + exception.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exception.getMessage());
+    }
+    @ExceptionHandler(ProductException.class)
+    public ResponseEntity<String>errorProduct(ProductException exception){
+        logger.error("ProductException: errorProduct(DeleteException  ~~нельзя удалять продукт" + exception.getMessage());
+        return ResponseEntity.status(HttpStatus.LOCKED).body(exception.getMessage());
+    }
+    @ExceptionHandler(ProductChangeRequestException.class)
+    public ResponseEntity<String>errorProductChangeRequestException(ProductChangeRequestException exception){
+        logger.error("ProductException: errorProduct(errorProductChangeRequestException  ~~нельзя удалять заявку" + exception.getMessage());
+        return ResponseEntity.status(HttpStatus.LOCKED).body(exception.getMessage());
     }
 }

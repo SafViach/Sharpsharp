@@ -105,10 +105,10 @@ CREATE TABLE enum_status_product (
     status VARCHAR(50) NOT NULL UNIQUE
 );
 
-CREATE TABLE discount (
-    id UUID PRIMARY KEY,
-    discount_amount DECIMAL(15, 2) NOT NULL
-);
+-- CREATE TABLE discount (
+--     id UUID PRIMARY KEY,
+--     discount_amount DECIMAL(15, 2) NOT NULL
+-- );
 CREATE TABLE product (
     id UUID PRIMARY KEY, -- -
     brand VARCHAR(128), -- -
@@ -133,8 +133,8 @@ CREATE TABLE product (
     -- + idx_product_trade_point_id(trade_point_id)
     sku VARCHAR(768) NOT NULL,
     -- + idx_product_sku(sku)
-    discount_id UUID REFERENCES discount(id),
-    version INTEGER
+--     discount_id UUID REFERENCES discount(id),
+    version INTEGER DEFAULT 0
 );
 CREATE TABLE update_product_history (
     id UUID PRIMARY KEY,

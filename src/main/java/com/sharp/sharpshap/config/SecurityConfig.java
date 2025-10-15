@@ -1,5 +1,7 @@
 package com.sharp.sharpshap.config;
 
+import com.sharp.sharpshap.exceptions.CustomAccessDeniedHandler;
+import com.sharp.sharpshap.exceptions.CustomAuthenticationEntryPoint;
 import com.sharp.sharpshap.filter.JwtFilter;
 import com.sharp.sharpshap.service.MyUserDetailsService;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +35,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   CustomAccessDeniedHandler customAccessDeniedHandler,
+                                                   CustomAuthenticationEntryPoint customAuthenticationEntryPoint) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .headers(headers -> headers
@@ -42,6 +46,9 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .userDetailsService(myUserDetailsService)
+                .exceptionHandling(exception-> exception
+                        .accessDeniedHandler(customAccessDeniedHandler)
+                        .authenticationEntryPoint(customAuthenticationEntryPoint))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("api/auth/**").permitAll()
                         .requestMatchers("api/hello").permitAll()
