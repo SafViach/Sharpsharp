@@ -1,13 +1,11 @@
-CREATE TABLE payment_transaction (
+CREATE TABLE enum_type_sale(
     id UUID PRIMARY KEY,
-    cash_amount DECIMAL(10, 2) DEFAULT 0.00,
-    cashless_amount DECIMAL(10, 2) DEFAULT 0.00,
-    credit_amount DECIMAL(10, 2) DEFAULT 0.00
+    name VARCHAR(50) UNIQUE NOT NULL
 );
 
 CREATE TABLE enum_money_location (
     id UUID PRIMARY KEY,
-    path VARCHAR(255) UNIQUE NOT NULL
+    path VARCHAR(50) UNIQUE NOT NULL
 );
 
 CREATE TABLE enum_type_payment (
@@ -15,11 +13,27 @@ CREATE TABLE enum_type_payment (
     type VARCHAR(50) NOT NULL UNIQUE
 );
 
+CREATE TABLE payment_transaction (
+    id UUID PRIMARY KEY,
+    type_payment_id UUID NOT NULL REFERENCES enum_type_payment(id),
+    cash_amount DECIMAL(10, 2) DEFAULT 0.00,
+    cashless_amount DECIMAL(10, 2) DEFAULT 0.00,
+    credit_amount DECIMAL(10, 2) DEFAULT 0.00
+);
+
+CREATE TABLE print(
+    id UUID PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL
+);
+CREATE TABLE refill(
+    id UUID PRIMARY KEY,
+    name VARCHAR(50) UNIQUE NOT NULL
+);
+
 CREATE TABLE payment_transaction_money_location (
     id UUID PRIMARY KEY,
     payment_transaction_id UUID NOT NULL REFERENCES payment_transaction(id),
     enum_money_location_id UUID NOT NULL REFERENCES enum_money_location(id),
-    enum_type_payment_id UUID NOT NULL REFERENCES enum_type_payment(id),
     amount DECIMAL(10, 2) NOT NULL
 );
 
@@ -167,17 +181,19 @@ CREATE TABLE update_product_history (
 
 CREATE TABLE sale (
     id UUID PRIMARY KEY,
-    total_price DECIMAL(10, 2) NOT NULL,
-    sale_date_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     trade_point_id UUID NOT NULL REFERENCES trade_point(id),
     user_id UUID NOT NULL REFERENCES "user"(id),
-    transaction_id UUID NOT NULL REFERENCES payment_transaction(id)
+    date_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    price DECIMAL(10, 2) NOT NULL
 );
-CREATE TABLE sales_products (
+CREATE TABLE item_sale (
     id UUID PRIMARY KEY,
     sale_id UUID NOT NULL REFERENCES sale(id),
-    product_id UUID NOT NULL REFERENCES product(id),
-    price DECIMAL(10, 2) NOT NULL
+    what_was_sold_id  UUID NOT NULL,
+    quantity INT NOT NULL,
+    type_sale_id UUID NOT NULL REFERENCES enum_type_sale(id),
+    total_price DECIMAL(10, 2) NOT NULL,
+    payment_transaction_id UUID NOT NULL REFERENCES payment_transaction(id)
 );
 CREATE TABLE product_change_request(
     id UUID PRIMARY KEY,

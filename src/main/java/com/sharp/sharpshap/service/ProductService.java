@@ -7,10 +7,7 @@ import com.sharp.sharpshap.enums.EnumStatusProduct;
 
 import java.time.LocalDateTime;
 
-import com.sharp.sharpshap.exceptions.CategoryNotFoundException;
-import com.sharp.sharpshap.exceptions.ProductException;
-import com.sharp.sharpshap.exceptions.ProductNotFoundException;
-import com.sharp.sharpshap.exceptions.SubcategoryNotFoundException;
+import com.sharp.sharpshap.exceptions.*;
 import com.sharp.sharpshap.repository.*;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -29,7 +26,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ProductService {
-    private final ProductChangeRequestRepository productChangeRequestRepository;
     private final UtilGenerateSKUService utilGenerateSKUService;
     private final CategorySubcategoryService categorySubcategoryService;
     private final StatusProductService statusProductService;
@@ -392,12 +388,13 @@ public class ProductService {
         logger.info("ProductService:  productChange прежде чем изменять сохраняем в базу новые значения для " +
                 "продукта в случае отката ");
         productChangeRequestService.save(productChangeDTO, product, user, tradePoint, currency, categorySubcategory);
-        setStatusProductByNameAndSave(STATUS_PRODUCT_PENDING, product);
+        setStatusProductByNameAndSave(STATUS_PRODUCT_PENDING, product.getId());
     }
 
-
+    @Transactional
     public Product setStatusProductByNameAndSave(String nameStatus,
-                                                 Product product) {
+                                                 UUID uuidProduct) {
+        Product product = getProductByUuid(uuidProduct);
         EnumStatusProduct statusProduct = statusProductService.findByName(nameStatus);
         product.setStatusProduct(statusProduct);
         logger.info("ProductService:  setStatusProductByNameAndSave продукту: " + product.getSku() + " именяем статус "
@@ -439,38 +436,19 @@ public class ProductService {
     }
 
     public void acceptNewProduct(UUID uuidProduct) {
-        Product product = getProductByUuid(uuidProduct);
-        logger.info("ProductService:  acceptNewProduct товар :" + product.getSku() + "одобрен администратором");
-        setStatusProductByNameAndSave(STATUS_PRODUCT_AVAILABLE, product);
+        logger.info("ProductService:  acceptNewProduct товар одобрен администратором");
+        setStatusProductByNameAndSave(STATUS_PRODUCT_AVAILABLE, uuidProduct);
     }
 
     //создать метод для администратора который при отказе добавления нового продукта пользователем изменят статус
     //продукту на "CANCEL"
     public void cancelAddNewProduct(UUID uuidProduct) {
-        Product product = getProductByUuid(uuidProduct);
-        logger.info("ProductService:  cancelAddNewProduct товар: " + product.getSku());
-        setStatusProductByNameAndSave(STATUS_PRODUCT_CANCEL, product);
-    }
-
-    public void cancelRemovableProduct(Product product) {
-        logger.info("ProductService:  cancelRemovableProduct в связи с отменой заявки на удаление продукта : "
-                + product.getSku() + " возобновляем продукту статус: " + STATUS_PRODUCT_AVAILABLE);
-        setStatusProductByNameAndSave(STATUS_PRODUCT_AVAILABLE, product);
-    }
-
-    //добавить метод который удаляет новую заявку пользователя добавления нового товара
-    public void deleteApplicationProduct(UUID uuidProduct) {
-        Product product = getProductByUuid(uuidProduct);
-        logger.info("ProductService:  deleteApplicationProduct удаление товара: " + product.getSku());
-        if (product.getStatusProduct().getStatus().equals(STATUS_PRODUCT_EXAMINATION)) {
-            productRepository.delete(product);
-        } else {
-            throw new ProductException("Удаление не возможно статус не равен " + STATUS_PRODUCT_EXAMINATION);
-        }
+        logger.info("ProductService:  cancelAddNewProduct товар");
+        setStatusProductByNameAndSave(STATUS_PRODUCT_CANCEL, uuidProduct);
     }
 
     @Transactional
-    public void sendToAnotherTradePoint(UUID uuidProduct, UUID uuidTradePoint) {
+    public Product sendToAnotherTradePoint(UUID uuidProduct, UUID uuidTradePoint) {
         Product product = getProductByUuid(uuidProduct);
         TradePoint tradePoint = tradePointService.getByIdTradePoint(uuidTradePoint);
 
@@ -479,60 +457,38 @@ public class ProductService {
         }
         logger.info("ProductService:  sendToAnotherTradePoint отправляем продукт : " + product.getSku()
                 + " на торговую точку: " + tradePoint.getName());
-        EnumStatusProduct statusProductPending = statusProductService.findByName(STATUS_PRODUCT_PENDING);
-        EnumStatusProduct statusProductMoving = statusProductService.findByName(STATUS_PRODUCT_MOVING);
 
-        product.setStatusProduct(statusProductPending);
-
-        ProductChangeRequest productChangeRequest = productToProductChangeRequest(product);
-
-        productChangeRequest.setStatusProduct(statusProductMoving);
-        productChangeRequest.setTradePoint(tradePoint);
-
-        productChangeRequestService.save(productChangeRequest);
-        productRepository.save(product);
+        return setStatusProductByNameAndSave(STATUS_PRODUCT_PENDING, product.getId());
     }
-    private ProductChangeRequest productToProductChangeRequest(Product product){
-        ProductChangeRequest productChangeRequest = new ProductChangeRequest();
 
-        productChangeRequest.setProduct(product);
-        productChangeRequest.setBrand(Optional.ofNullable(product.getBrand()).orElse(" "));
-        productChangeRequest.setModel(Optional.ofNullable(product.getModel()).orElse(" "));
-        productChangeRequest.setCharacteristics(Optional.ofNullable(product.getCharacteristics())
-                .orElse(" "));
-        productChangeRequest.setQuantity(product.getQuantity());
-        productChangeRequest.setCurrency(product.getCurrency());
-        productChangeRequest.setCurrencyRate(product.getCurrencyRate());
-        productChangeRequest.setPriceWithVat(product.getPriceWithVat());
-        productChangeRequest.setPriceSelling(product.getPriceSelling());
-        productChangeRequest.setStatusProduct(product.getStatusProduct());
-        productChangeRequest.setCategorySubcategory(product.getCategorySubcategory());
-        productChangeRequest.setSku(product.getSku());
-        productChangeRequest.setUser(product.getUserAcceptedProduct());
-        productChangeRequest.setTradePoint(product.getTradePoint());
 
-        return productChangeRequest;
-    }
     @Transactional
-    public void deleteProduct(UUID uuidProduct){
+    public void deleteProduct(UUID uuidProduct) {
         Product product = getProductByUuid(uuidProduct);
-        logger.info("ProductService:  deleteProduct удаление продукта администратором: " + product.getSku());
+        checkStatusProduct(product);
+        logger.info("ProductService:  deleteProduct удаление продукта: " + product.getSku());
         productRepository.delete(product);
     }
-    @Transactional
-    public void deleteProductForUser(UUID uuidProduct , UUID uuidUser){
-        Product product = getProductByUuid(uuidProduct);
-        User user = userService.getUserById(uuidUser);
-        logger.info("ProductService:  deleteProduct удаление продукта: " + product.getSku() + " пользователем: "
-                + user.getFirstName() + " " + user.getLastName());
-        ProductChangeRequest productChangeRequest = productToProductChangeRequest(product);
-        EnumStatusProduct statusProductRemovable = statusProductService.findByName(STATUS_PRODUCT_REMOVABLE);
-        productChangeRequest.setStatusProduct(statusProductRemovable);
-        productChangeRequest.setUser(user);
-        setStatusProductByNameAndSave(STATUS_PRODUCT_PENDING , product);
-        productRepository.save(product);
-        productChangeRequestRepository.save(productChangeRequest);
+
+    private void checkStatusProduct(Product product) {
+        if (!product.getStatusProduct().getStatus().equals(STATUS_PRODUCT_CANCEL) ||
+                !product.getStatusProduct().equals(STATUS_PRODUCT_EXAMINATION) ||
+                !product.getStatusProduct().equals(STATUS_PRODUCT_REMOVABLE)) {
+            throw new ProductChangeRequestException("Продукт не равен статусу: " + STATUS_PRODUCT_CANCEL + " , " +
+                    STATUS_PRODUCT_EXAMINATION + " , " + STATUS_PRODUCT_REMOVABLE);
+        }
+
     }
 
+    public void setTradePoint(Product product, UUID uuidTradePoint) {
+        TradePoint tradePoint = tradePointService.getByIdTradePoint(uuidTradePoint);
+        logger.info("ProductService:  setTradePoint товар прибыл на точку:" + tradePoint.getName());
+        if (product.getStatusProduct().equals(STATUS_PRODUCT_MOVING)) {
+            product.setTradePoint(tradePoint);
+        } else {
+            throw new ProductException("Товар не равен статусу : " + STATUS_PRODUCT_MOVING + "точка не присвоена");
+        }
+        setStatusProductByNameAndSave(STATUS_PRODUCT_AVAILABLE, product.getId());
+    }
 
 }

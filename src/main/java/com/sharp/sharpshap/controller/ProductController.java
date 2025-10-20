@@ -90,14 +90,6 @@ public class ProductController {
         return ResponseEntity.ok().build();
     }
 
-    @PutMapping("/{uuidProduct}")
-    public ResponseEntity sendToAnotherTradePoint(@PathVariable(name = "uuidProduct") UUID uuidProduct,
-                                                  @RequestBody RequestUuidTradePoint requestUuidTradePoint){
-        logger.info("ProductController: ---sendToAnotherTradePoint отправка продукта на другую точку");
-        productService.sendToAnotherTradePoint(uuidProduct,requestUuidTradePoint.getUuidTradePoint());
-        return ResponseEntity.ok().build();
-    }
-
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{uuidProduct}")
     public ResponseEntity deleteProduct (@PathVariable(name = "uuidProduct") UUID uuidProduct){

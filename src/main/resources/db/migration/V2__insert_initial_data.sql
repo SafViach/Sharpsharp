@@ -8,6 +8,7 @@ SET @role_user_id = (SELECT id FROM enum_role WHERE name = 'ROLE_USER');
 INSERT INTO enum_type_payment (id, type) VALUES
     (RANDOM_UUID(), 'CASH'),
     (RANDOM_UUID(), 'NON_CASH'),
+    (RANDOM_UUID(), 'CASH_AND_NON_CASH'),
     (RANDOM_UUID(), 'CREDIT');
 
 INSERT INTO enum_money_location (id, path) VALUES

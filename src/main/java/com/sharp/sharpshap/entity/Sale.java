@@ -17,25 +17,21 @@ public class Sale{
     @GeneratedValue
     private UUID id;
 
-    @Column(nullable = false, precision = 4, scale = 2)
-    private BigDecimal totalPrice;
-
-    @Column(nullable = false)
-    private LocalDateTime saleDateTime;
-
     @ManyToOne
-    @JoinColumn(name = "trade_point_id",nullable = false)
+    @JoinColumn(nullable = false)
     private TradePoint tradePoint;
 
     @ManyToOne
     @JoinColumn(nullable = false)
     private User user;
 
-    @OneToMany(mappedBy = "sale" , cascade = CascadeType.ALL)//---------------------------------
-    private List<SaleProduct> saleProducts;
+    @Column(nullable = false)
+    private LocalDateTime dateTime;
 
-    @OneToOne
-    @JoinColumn(nullable = false)
-    private PaymentTransaction transaction;
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal price;
+
+    @OneToMany(mappedBy = "sale")
+    private List<ItemSale> itemSales;
 
 }

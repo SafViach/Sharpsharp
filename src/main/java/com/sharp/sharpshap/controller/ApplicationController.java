@@ -1,6 +1,7 @@
 package com.sharp.sharpshap.controller;
 
 import com.sharp.sharpshap.dto.ProductChangeDTO;
+import com.sharp.sharpshap.dto.RequestUuidTradePoint;
 import com.sharp.sharpshap.dto.ResponseApplicationsDTO;
 import com.sharp.sharpshap.service.ApplicationService;
 import jakarta.validation.Valid;
@@ -23,7 +24,7 @@ public class ApplicationController {
 
     @GetMapping("/get-applications/admin")
     public ResponseEntity<ResponseApplicationsDTO> getAllApplicationsForAdmin() {
-        logger.info("ApplicationService: ---getAllApplicationsForAdmin");
+        logger.info("ApplicationController: ---getAllApplicationsForAdmin");
         ResponseApplicationsDTO responseApplicationsDTO = new ResponseApplicationsDTO();
 
         responseApplicationsDTO.setApplicationsProductChangeRequestDTOS(
@@ -37,7 +38,7 @@ public class ApplicationController {
     @GetMapping("/get-applications/user")
     public ResponseEntity<ResponseApplicationsDTO> getAllApplicationsFilterForUser(
             @RequestAttribute(name = "uuidTradePoint") UUID uuidTradePoint) {
-        logger.info("ApplicationService: ---getAllApplicationsFilterForUser");
+        logger.info("ApplicationController: ---getAllApplicationsFilterForUser");
         ResponseApplicationsDTO responseApplicationsDTO = new ResponseApplicationsDTO();
         responseApplicationsDTO.setApplicationsNewProductDTOS(
                 applicationService.getAllApplicationsAddNewProductFilterForUserDTO(uuidTradePoint));
@@ -50,7 +51,7 @@ public class ApplicationController {
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/accept/new-add-product/{uuidProduct}")
     public ResponseEntity acceptNewProduct(@PathVariable(name = "uuidProduct") UUID uuidProduct) {
-        logger.info("ApplicationService: ---acceptNewProduct заявка на добавление нового товара " +
+        logger.info("ApplicationController: ---acceptNewProduct заявка на добавление нового товара " +
                 "принята администратором");
         applicationService.acceptNewProduct(uuidProduct);
         return ResponseEntity.ok().build();
@@ -59,26 +60,26 @@ public class ApplicationController {
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/accept/changeable-product/{uuidProductChange}")
     public ResponseEntity acceptChangeableProduct(@PathVariable(name = "uuidProductChange") UUID uuidProductChange) {
-        logger.info("ApplicationService: ---acceptChangeableProduct заявка на изменение продукта " +
+        logger.info("ApplicationController: ---acceptChangeableProduct заявка на изменение продукта " +
                 " принята администратором");
         applicationService.acceptProductChange(uuidProductChange);
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/accept/removable-product/{uuidProductChange}")
-    public ResponseEntity acceptRemovableChangeableProduct(@PathVariable(name = "uuidProductChange") UUID uuidProductChange) {
-        logger.info("ApplicationService: ---acceptRemovableChangeableProduct заявка на удаление продукта" +
+    @DeleteMapping("/accept/removed-product/{uuidProductChange}")
+    public ResponseEntity acceptRemovedChangeableProduct(@PathVariable(name = "uuidProductChange") UUID uuidProductChange) {
+        logger.info("ApplicationController: ---acceptRemovableChangeableProduct заявка на удаление продукта" +
                 " принята администратором");
-        applicationService.acceptRemovableProduct(uuidProductChange);
+        applicationService.acceptRemovedProduct(uuidProductChange);
         return ResponseEntity.ok().build();
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/cancel/removable-product/{uuidProductChange}")
-    public ResponseEntity cancelRemovableChangeableProduct(@PathVariable(name = "uuidProductChange") UUID uuidProductChange) {
-        logger.info("ApplicationService: ---cancelRemovableChangeableProduct заявка на удаление продукта" +
+    @PutMapping("/cancel/removed-product/{uuidProductChange}")
+    public ResponseEntity cancelRemovedChangeableProduct(@PathVariable(name = "uuidProductChange") UUID uuidProductChange) {
+        logger.info("ApplicationController: ---cancelRemovableChangeableProduct заявка на удаление продукта" +
                 " отклонена администратором");
-        applicationService.cancelRemovableProduct(uuidProductChange);
+        applicationService.cancelRemovedProduct(uuidProductChange);
         return ResponseEntity.ok().build();
     }
 
@@ -86,7 +87,7 @@ public class ApplicationController {
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/cancel/new-add-product/{uuidProduct}")
     public ResponseEntity cancelNewAddProduct(@PathVariable(name = "uuidProduct") UUID uuidProduct) {
-        logger.info("ApplicationService: ---cancelNewAddProduct заявка на добавление нового товара " +
+        logger.info("ApplicationController: ---cancelNewAddProduct заявка на добавление нового товара " +
                 " отменена администратором");
         applicationService.cancelAddNewProduct(uuidProduct);
         return ResponseEntity.ok().build();
@@ -95,7 +96,7 @@ public class ApplicationController {
     @PreAuthorize("hasRole('ADMIN')")
     @PatchMapping("/cancel/changeable-product/{uuidProductChange}")
     public ResponseEntity cancelChangeableProduct(@PathVariable(name = "uuidProductChange") UUID uuidProductChange) {
-        logger.info("ApplicationService: ---cancelChangeableProduct заявка на изменение товара " +
+        logger.info("ApplicationController: ---cancelChangeableProduct заявка на изменение товара " +
                 " отменена администратором");
         applicationService.cancelChangeableProduct(uuidProductChange);
         return ResponseEntity.ok().build();
@@ -104,8 +105,8 @@ public class ApplicationController {
     @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/delete/new-add-product/{uuidProduct}")
     public ResponseEntity deleteNewAddProduct(@PathVariable(name = "uuidProduct") UUID uuidProduct) {
-        logger.info("ApplicationService: ---cancelChangeableProduct заявка на добавление нового  товара " +
-                " отменена пользователем");
+        logger.info("ApplicationController: ---cancelChangeableProduct заявка на добавление нового  товара " +
+                " удалена пользователем");
         applicationService.deleteNewProduct(uuidProduct);
         return ResponseEntity.ok().build();
     }
@@ -113,7 +114,7 @@ public class ApplicationController {
     @PreAuthorize("hasRole('USER')")
     @DeleteMapping("/delete/changeable-product/{uuidProductChange}")
     public ResponseEntity deleteChangeableProduct(@PathVariable(name = "uuidProductChange") UUID uuidProductChange) {
-        logger.info("ApplicationService: ---cancelChangeableProduct заявка на изменение товара " +
+        logger.info("ApplicationController: ---cancelChangeableProduct заявка на изменение товара " +
                 " отменена пользователем");
         applicationService.deleteChangeableProduct(uuidProductChange);
         return ResponseEntity.ok().build();
@@ -123,16 +124,17 @@ public class ApplicationController {
     public ResponseEntity updateChangeableProduct(@PathVariable(name = "uuidProductChange") UUID uuidProductChange,
                                                   @RequestAttribute(name = "uuidUser") UUID uuidUser,
                                                   @Valid @RequestBody ProductChangeDTO productChangeDTO) {
-        logger.info("ApplicationService: ---updateNewAddProduct изменение нового продукта");
+        logger.info("ApplicationController: ---updateChangeableProduct изменение нового продукта");
         applicationService.updateChangeableProduct(uuidProductChange, uuidUser, productChangeDTO);
         return ResponseEntity.ok().build();
     }
 
     @PreAuthorize("hasRole('USER')")
     @PutMapping("received-the-product/{uuidProductCange}")
-    public ResponseEntity receivedTheProduct(@PathVariable(name = "uuidProductCange") UUID uuidProductCange) {
-        logger.info("ApplicationService: ---receivedTheProduct товар отправленный на точку был принят");
-        applicationService.receivedTheProduct(uuidProductCange);
+    public ResponseEntity receivedTheProduct(@CookieValue(name = "uuidTradePoint") UUID uuidTradePoint,
+                                             @PathVariable(name = "uuidProductCange") UUID uuidProductChange) {
+        logger.info("ApplicationController: ---receivedTheProduct товар отправленный на точку был принят");
+        applicationService.receivedTheProduct(uuidProductChange, uuidTradePoint);
         return ResponseEntity.ok().build();
     }
 
@@ -140,8 +142,15 @@ public class ApplicationController {
     @PutMapping("delete-the-product-for-user/{uuidProduct}")
     public ResponseEntity deleteProductForUser(@PathVariable(name = "uuidProduct") UUID uuidProduct,
                                                @RequestAttribute(name = "uuidUser") UUID uuidUser) {
-        logger.info("ApplicationService: ---deleteProductForUser создание заявки на удаление продукта пользователем");
+        logger.info("ApplicationController: ---deleteProductForUser создание заявки на удаление продукта пользователем");
         applicationService.deleteProductForUser(uuidProduct, uuidUser);
+        return ResponseEntity.ok().build();
+    }
+    @PutMapping("/{uuidProduct}")
+    public ResponseEntity sendToAnotherTradePoint(@PathVariable(name = "uuidProduct") UUID uuidProduct,
+                                                  @RequestBody RequestUuidTradePoint requestUuidTradePoint){
+        logger.info("ApplicationController: ---sendToAnotherTradePoint отправка продукта на другую точку");
+        applicationService.sendToAnotherTradePoint(uuidProduct,requestUuidTradePoint.getUuidTradePoint());
         return ResponseEntity.ok().build();
     }
 

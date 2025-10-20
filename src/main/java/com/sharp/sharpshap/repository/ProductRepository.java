@@ -22,7 +22,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             AND p.statusProduct = :status
             AND p.tradePoint = :tradePoint
             AND LOWER(p.sku) LIKE LOWER(CONCAT('%', :keyword, '%'))
-            ORDER BY p.id
             """)
     List<Product> filterByTradePointAndStatusForSearchBySkuKeyword(@Param("status") EnumStatusProduct statusProduct,
                                                                    @Param("tradePoint") TradePoint tradePoint,
@@ -37,7 +36,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             AND p.tradePoint = :tradePoint
             AND LOWER(p.sku) LIKE LOWER(CONCAT('%', :part1, '%'))
             AND LOWER(p.sku) LIKE LOWER(CONCAT('%', :part2, '%'))
-            ORDER BY p.id ASC
             """)
     List<Product> filterByTradePointAndStatusForSearchByTwoParts(@Param("status") EnumStatusProduct statusProduct,
                                                                  @Param("tradePoint") TradePoint tradePoint,
@@ -54,7 +52,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             AND LOWER(p.sku) LIKE LOWER (CONCAT('%', :part1, '%'))
             AND LOWER(p.sku) LIKE LOWER (CONCAT('%', :part2, '%'))
             AND LOWER(p.sku) LIKE LOWER (CONCAT('%', :part3, '%'))
-            ORDER BY p.id ASC
             """)
     List<Product> filterByTradePointAndStatusForSearchByThreeParts(@Param("status") EnumStatusProduct statusProduct,
                                                                    @Param("tradePoint") TradePoint tradePoint,
@@ -73,7 +70,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             AND LOWER(p.sku) LIKE LOWER (CONCAT('%', :part2, '%')) 
             AND LOWER(p.sku) LIKE LOWER (CONCAT('%', :part3, '%'))
             AND LOWER(p.sku) LIKE LOWER (CONCAT('%', :part4, '%'))
-            ORDER BY p.id ASC
             """)
     List<Product> filterByTradePointAndStatusForSearchByFourParts(@Param("status") EnumStatusProduct statusProduct,
                                                                   @Param("tradePoint") TradePoint tradePoint,
@@ -94,7 +90,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             AND LOWER(p.sku) LIKE LOWER (CONCAT('%', :part3, '%'))
             AND LOWER(p.sku) LIKE LOWER (CONCAT('%', :part4, '%'))
             AND LOWER(p.sku) LIKE LOWER (CONCAT('%', :part5, '%'))
-            ORDER BY p.id ASC
             """)
     List<Product> filterByTradePointAndStatusForSearchByFiveParts(@Param("status") EnumStatusProduct statusProduct,
                                                                   @Param("tradePoint") TradePoint tradePoint,
@@ -116,7 +111,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             WHERE (:afterId IS NULL OR p.id > :afterId) 
             AND  p.statusProduct = :status
             AND p.tradePoint = :tradePoint
-            ORDER BY p.id ASC
             """)
     List<Product> filterByTradePointAndStatusForPageable(@Param("status") EnumStatusProduct status,
                                                          @Param("tradePoint") TradePoint tradePoint,
@@ -129,7 +123,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             AND  p.statusProduct = :status 
             AND p.tradePoint = :tradePoint 
             AND p.id > :afterId
-            ORDER BY p.id ASC
             """)
     List<Product> filterByTradePointAndStatusForFindNextPage(@Param("status") EnumStatusProduct status,
                                                              @Param("tradePoint") TradePoint tradePoint,

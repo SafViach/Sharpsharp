@@ -23,10 +23,6 @@ public class PaymentTransactionMoneyLocation {
     @JoinColumn(name = "enum_money_location_id")
     private EnumMoneyLocation moneyLocation;
 
-    @ManyToOne
-    @JoinColumn(name = "enum_type_payment_id")
-    private EnumTypePayment typePayment;
-
     @Column(precision = 10, scale = 2, nullable = false)
     private BigDecimal amount;
 }

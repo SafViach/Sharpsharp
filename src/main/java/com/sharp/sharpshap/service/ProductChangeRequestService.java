@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Currency;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -131,14 +130,11 @@ public class ProductChangeRequestService {
         EnumStatusProduct statusProductMoving = statusProductService.findByName(STATUS_PRODUCT_MOVING);
         EnumStatusProduct statusProductRemovable = statusProductService.findByName(STATUS_PRODUCT_REMOVABLE);
 
-
         List<EnumStatusProduct> statusProduct = List.of(
                 statusProductExamination,
                 statusProductMoving,
                 statusProductRemovable);
-        List<ProductChangeRequest> productChangeRequests = getFilterProductChangeRequestByStatus(
-                statusProduct);
-        return productChangeRequests;
+        return productChangeRequestRepository.findByStatusProductIn(statusProduct);
     }
 
     private List<ProductChangeRequest> getFilterByStatusAndTradePointAllProductChange(UUID uuidTradePoint) {
@@ -183,10 +179,7 @@ public class ProductChangeRequestService {
         );
     }
 
-    private List<ProductChangeRequest> getFilterProductChangeRequestByStatus(List<EnumStatusProduct> statusProduct) {
-        logger.info("ProductChangeRequestService: ---getFilterProductChangeRequestByStatus");
-        return productChangeRequestRepository.findByStatusProductIn(statusProduct);
-    }
+
 
     private List<ProductChangeRequest> getFilterProductChangeRequestByStatusAndTradePoint(List<EnumStatusProduct>
                                                                                                   statusProduct,
@@ -209,22 +202,7 @@ public class ProductChangeRequestService {
     }
 
     @Transactional
-    public void acceptChangeProductRequest(UUID uuidProductRequest) {
-        ProductChangeRequest productChangeRequest = getByUuid(uuidProductRequest);
-        Product oldProduct = getProductByUuid(productChangeRequest.getProduct().getId());
-        EnumStatusProduct statusProduct = statusProductService.findByName(STATUS_PRODUCT_AVAILABLE);
-        logger.info("ProductChangeRequestService: ---acceptChangeProductRequest принимаем заявку изменения " +
-                "продукта:" + oldProduct.getSku() + " на: " + productChangeRequest.getSku());
-        Product updateProduct = updateProduct(productChangeRequest, oldProduct, statusProduct);
-        logger.info("ProductChangeRequestService: ---acceptChangeProductRequest сохраняем продукт " +
-                "после изменения");
-        productRepository.save(updateProduct);
-
-        deleteProductChangeRequest(productChangeRequest);
-    }
-
-    @Transactional
-    public void acceptRemovableProduct(UUID uuidProductRequest) {
+    public void acceptRemovedProduct(UUID uuidProductRequest) {
         ProductChangeRequest productChangeRequest = getByUuid(uuidProductRequest);
         Product product = productChangeRequest.getProduct();
         logger.info("ProductChangeRequestService: ---acceptRemovableProduct принимаем заявку удаление продукта: " +
@@ -273,12 +251,14 @@ public class ProductChangeRequestService {
     //написать метод который удаляет заявку для изменения продукта
     //доступна всем
     @Transactional
-    public void deleteChangeableProduct(UUID uuidProductRequest) {
+    public Product deleteChangeableProduct(UUID uuidProductRequest) {
         ProductChangeRequest productChangeRequest = getByUuid(uuidProductRequest);
+        Product product = productChangeRequest.getProduct();
         logger.info("ProductChangeRequestService: ---deleteChangeableProduct удаление заявки : " +
-                productChangeRequest.getProduct().getSku() + " на " + productChangeRequest.getSku());
+                product.getSku() + " на " + productChangeRequest.getSku());
         checkStatusProduct(productChangeRequest);
         deleteProductChangeRequest(productChangeRequest);
+        return product;
     }
 
     //написать метод который изменяет изменения к продукту
@@ -322,19 +302,54 @@ public class ProductChangeRequestService {
         }
 
     }
+    public ProductChangeRequest productToProductChangeRequest(Product product,String statusProduct) {
+        EnumStatusProduct status = statusProductService.findByName(statusProduct);
+        ProductChangeRequest productChangeRequest = new ProductChangeRequest();
 
-    //написать метод который при получении продукта с другой точки продукт был изменен статус и заявка удалена
-    @Transactional
-    public void receivedTheProduct(UUID uuidProductChange) {
-        logger.info("ProductChangeRequestService: ---receivedTheProduct принимаем товар с другой точки");
-        ProductChangeRequest productChangeRequest = getByUuid(uuidProductChange);
-        Product product = productChangeRequest.getProduct();
-        logger.info("ProductChangeRequestService: ---receivedTheProduct товар: " + product.getSku() + " пришел с точки: "
-                + product.getTradePoint().getName() + " на точку: " + productChangeRequest.getTradePoint().getName());
-        EnumStatusProduct statusProductAvailable = statusProductService.findByName(STATUS_PRODUCT_AVAILABLE);
-        product.setStatusProduct(statusProductAvailable);
-        product.setTradePoint(productChangeRequest.getTradePoint());
-        productRepository.save(product);
-        productChangeRequestRepository.delete(productChangeRequest);
+        productChangeRequest.setProduct(product);
+        productChangeRequest.setBrand(Optional.ofNullable(product.getBrand()).orElse(" "));
+        productChangeRequest.setModel(Optional.ofNullable(product.getModel()).orElse(" "));
+        productChangeRequest.setCharacteristics(Optional.ofNullable(product.getCharacteristics())
+                .orElse(" "));
+        productChangeRequest.setQuantity(product.getQuantity());
+        productChangeRequest.setCurrency(product.getCurrency());
+        productChangeRequest.setCurrencyRate(product.getCurrencyRate());
+        productChangeRequest.setPriceWithVat(product.getPriceWithVat());
+        productChangeRequest.setPriceSelling(product.getPriceSelling());
+
+        productChangeRequest.setStatusProduct(status);
+
+        productChangeRequest.setCategorySubcategory(product.getCategorySubcategory());
+        productChangeRequest.setSku(product.getSku());
+        productChangeRequest.setUser(product.getUserAcceptedProduct());
+        productChangeRequest.setTradePoint(product.getTradePoint());
+
+        return productChangeRequestRepository.save(productChangeRequest);
+    }
+
+    public ProductChangeRequest productToProductChangeRequest(Product product,String statusProduct, UUID uuidTradePoint) {
+        EnumStatusProduct status = statusProductService.findByName(statusProduct);
+        ProductChangeRequest productChangeRequest = new ProductChangeRequest();
+        TradePoint tradePoint = tradePointService.getByIdTradePoint(uuidTradePoint);
+
+        productChangeRequest.setProduct(product);
+        productChangeRequest.setBrand(Optional.ofNullable(product.getBrand()).orElse(" "));
+        productChangeRequest.setModel(Optional.ofNullable(product.getModel()).orElse(" "));
+        productChangeRequest.setCharacteristics(Optional.ofNullable(product.getCharacteristics())
+                .orElse(" "));
+        productChangeRequest.setQuantity(product.getQuantity());
+        productChangeRequest.setCurrency(product.getCurrency());
+        productChangeRequest.setCurrencyRate(product.getCurrencyRate());
+        productChangeRequest.setPriceWithVat(product.getPriceWithVat());
+        productChangeRequest.setPriceSelling(product.getPriceSelling());
+
+        productChangeRequest.setStatusProduct(status);
+
+        productChangeRequest.setCategorySubcategory(product.getCategorySubcategory());
+        productChangeRequest.setSku(product.getSku());
+        productChangeRequest.setUser(product.getUserAcceptedProduct());
+        productChangeRequest.setTradePoint(tradePoint);
+
+        return productChangeRequestRepository.save(productChangeRequest);
     }
 }
