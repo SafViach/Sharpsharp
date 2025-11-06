@@ -1,3 +1,24 @@
+INSERT INTO service_catalog (id, name, price) VALUES
+    (RANDOM_UUID(), 'Распечатка', 0.00),
+    (RANDOM_UUID(), 'Выбор номера', 0.00),
+    (RANDOM_UUID(), 'Пополнение', 0.00);
+
+INSERT INTO tariff_plan (id, name, price) VALUES
+    (RANDOM_UUID(), 'Базовый 7.90', 9.90),
+    (RANDOM_UUID(), 'Конструктор 4.90', 6.90),
+    (RANDOM_UUID(), 'Как дома по скидке 30 1 мес -> 35.90', 32.00),
+    (RANDOM_UUID(), 'Как дома без скидки 35', 35.90),
+    (RANDOM_UUID(), 'Голос по скидке 6 мес 10.90 -> 19.90', 12.90),
+    (RANDOM_UUID(), 'Бесконечный без скидки 18.90', 18.90),
+    (RANDOM_UUID(), 'Бесконечный по скидке 6 мес 10.90', 12.90),
+    (RANDOM_UUID(), 'Бесконечный + без скидки 26.90', 26.90),
+    (RANDOM_UUID(), 'Бесконечный + по скидке 6 мес 14.90', 16.90),
+    (RANDOM_UUID(), 'Бесконечный Pro Max без скидки', 34.90),
+    (RANDOM_UUID(), 'Бесконечный Pro Max по скидке 6 мес -> 34.90', 20.90),
+    (RANDOM_UUID(), 'Бесконечный Pro по скидке 6 мес 9.90 / 6 мес 18.90 -> 32.90', 9.90),
+    (RANDOM_UUID(), 'Бесконечный Pro без скидки 32.90', 32.90),
+    (RANDOM_UUID(), 'Бесконечный Pro MNP по скидке 12 мес 14.90 -> 32.90', 14.90);
+
 INSERT INTO enum_role (id, name) VALUES
     (RANDOM_UUID(), 'ROLE_ADMIN'),
     (RANDOM_UUID(), 'ROLE_USER');
@@ -6,13 +27,18 @@ SET @role_admin_id = (SELECT id FROM enum_role WHERE name = 'ROLE_ADMIN');
 SET @role_user_id = (SELECT id FROM enum_role WHERE name = 'ROLE_USER');
 
 INSERT INTO enum_type_payment (id, type) VALUES
-    (RANDOM_UUID(), 'CASH'),
-    (RANDOM_UUID(), 'NON_CASH'),
-    (RANDOM_UUID(), 'CASH_AND_NON_CASH'),
-    (RANDOM_UUID(), 'CREDIT');
+    (RANDOM_UUID(), 'Наличными'),
+    (RANDOM_UUID(), 'Безнализными'),
+    (RANDOM_UUID(), 'Наличными + Безналичными'),
+    (RANDOM_UUID(), 'Кредит/Рассрочка');
+
+INSERT INTO enum_type_sale (id, name) VALUES
+    (RANDOM_UUID(), 'PRODUCT'),
+    (RANDOM_UUID(), 'PRINT'),
+    (RANDOM_UUID(), 'REFILL');
 
 INSERT INTO enum_money_location (id, path) VALUES
-    (RANDOM_UUID(), 'CASH_IN_BOX'), -- наличные пошли в коробку
+    (RANDOM_UUID(), 'Наличные в коробку (Н)'), -- наличные пошли в коробку
     (RANDOM_UUID(), 'CASH_IN_REGISTER_LIFE'), -- наличные пошли в кассу от life
     (RANDOM_UUID(), 'CASH_IN_REGISTER_LAPTOP'), -- наличные пошли в кассу от laptop
     (RANDOM_UUID(), 'CASH_IN_REGISTER_LIFE_FROM_LAPTOP'), -- наличные пошли в кассу life от laptop
@@ -303,6 +329,9 @@ INSERT INTO product (id, brand, model, characteristics, quantity, currency_id, c
      @user_slava_id, null, @category_subcategory_id_category_glass_subcategory_null,
      @trade_point_hataevicha_id, 'Стёкла-null-IPhone-16Pro');
 
-
+INSERT INTO life_equipment (id, brand, model, characteristics, quantity, price_selling,
+                            sku, user_id, trade_point_id) VALUES
+    (RANDOM_UUID(), 'Infinix', 'Smart 10', '4GB/128GB', 1, 297,'INFINIX-SMART 10-4GB/127GB', @user_slava_id, @trade_point_vaczal_id),
+    (RANDOM_UUID(), 'Infinix', 'HOT 60i', '4GB/128GB', 1, 399, 'INFINIX-HOT 60I-4GB/127GB', @user_slava_id, @trade_point_vaczal_id)
 
 

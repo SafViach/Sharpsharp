@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("api/productChangeRequest")
 public class ProductChangeRequestController{
     private ProductChangeRequestService productChangeRequestService;
-    public static final Logger logger = LoggerFactory.getLogger(ProductChangeRequestController.class);
+    private static final Logger logger = LoggerFactory.getLogger(ProductChangeRequestController.class);
 
 
 //    //заявки

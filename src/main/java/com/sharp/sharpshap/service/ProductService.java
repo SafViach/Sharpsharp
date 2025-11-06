@@ -243,7 +243,7 @@ public class ProductService {
     }
 
     @Transactional
-    public ResponseProductSlice searchByLine(RequestProductSearchDTO productSearchDTO,
+    public ResponseProductSlice searchByLine(RequestSearchByLineDTO requestSearchByLineDTO,
                                              UUID uuidTradePoint,
                                              UUID uuidProductAfter,
                                              int pageSize) {
@@ -254,7 +254,7 @@ public class ProductService {
         pageSize = checkPageSize(pageSize);
 
 
-        String line = productSearchDTO.getLineSearch();
+        String line = requestSearchByLineDTO.getLineSearch();
 
         String cleaner = line.trim().toLowerCase();
         String[] parts = cleaner.split("\\s+");
@@ -328,13 +328,17 @@ public class ProductService {
             return correctionListProduct(products, pageSize);
 
         }
-        List<Product> products = productRepository.filterByTradePointAndStatusForSearchBySkuKeyword(
+        logger.info("ProductService: searchByLine parts.length == 5 и больше" + parts[0] + " " + parts[1] + " " + parts[2] + " " + parts[3] + " " + parts[4]);
+        List<Product> products = productRepository.filterByTradePointAndStatusForSearchByFiveParts(
                 status,
                 tradePoint,
                 parts[0],
+                parts[1],
+                parts[2],
+                parts[3],
+                parts[4],
                 uuidProductAfter,
                 pageable);
-
 
         return correctionListProduct(products, pageSize);
     }

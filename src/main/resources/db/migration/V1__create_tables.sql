@@ -21,13 +21,16 @@ CREATE TABLE payment_transaction (
     credit_amount DECIMAL(10, 2) DEFAULT 0.00
 );
 
-CREATE TABLE print(
+CREATE TABLE service_catalog(
     id UUID PRIMARY KEY,
-    name VARCHAR(50) UNIQUE NOT NULL
+    name VARCHAR(50) NOT NULL,
+    price DECIMAL(4,2) NOT NULL DEFAULT 0.00
 );
-CREATE TABLE refill(
+
+CREATE TABLE tariff_plan(
     id UUID PRIMARY KEY,
-    name VARCHAR(50) UNIQUE NOT NULL
+    name VARCHAR(100) NOT NULL,
+    price DECIMAL(4,2) NOT NULL DEFAULT 0.00
 );
 
 CREATE TABLE payment_transaction_money_location (
@@ -212,4 +215,19 @@ CREATE TABLE product_change_request(
     user_id UUID NOT NULL REFERENCES "user"(id),
     trade_point_id UUID NOT NULL REFERENCES trade_point(id)
 );
+
+CREATE TABLE life_equipment(
+    id UUID PRIMARY KEY,
+    brand VARCHAR(128),
+    model VARCHAR(128),
+    characteristics VARCHAR(128),
+    quantity INT NOT NULL,
+    price_selling DECIMAL(10, 2) NOT NULL,
+    sku VARCHAR(768) NOT NULL,
+    user_id UUID NOT NULL REFERENCES "user"(id),
+    trade_point_id UUID NOT NULL REFERENCES trade_point(id)
+);
+
+
+
 

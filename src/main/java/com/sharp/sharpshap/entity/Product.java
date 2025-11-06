@@ -62,6 +62,7 @@ public class Product {
     @JoinColumn(name = "trade_point_id", nullable = false)
     private TradePoint tradePoint;
 
+    @Column(nullable = false)
     private String sku;
 
     @Version

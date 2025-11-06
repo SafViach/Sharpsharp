@@ -2,7 +2,6 @@ package com.sharp.sharpshap.repository;
 
 import com.sharp.sharpshap.entity.Product;
 import com.sharp.sharpshap.entity.TradePoint;
-import com.sharp.sharpshap.entity.User;
 import com.sharp.sharpshap.enums.EnumStatusProduct;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -104,8 +103,6 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
 
     List<Product> findByStatusProductIn(List<EnumStatusProduct> statusProduct);
 
-    List<Product> findByStatusProductAndTradePoint(EnumStatusProduct statusProduct, TradePoint tradePoint);
-
     @Query("""
             SELECT p FROM Product p 
             WHERE (:afterId IS NULL OR p.id > :afterId) 
@@ -124,10 +121,7 @@ public interface ProductRepository extends JpaRepository<Product, UUID> {
             AND p.tradePoint = :tradePoint 
             AND p.id > :afterId
             """)
-    List<Product> filterByTradePointAndStatusForFindNextPage(@Param("status") EnumStatusProduct status,
-                                                             @Param("tradePoint") TradePoint tradePoint,
-                                                             @Param("afterId") UUID afterId,
-                                                             Pageable pageable);
+
 
     List<Product> findByStatusProductInAndTradePoint(List<EnumStatusProduct> statusProduct, TradePoint tradePoint);
 

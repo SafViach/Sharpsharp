@@ -2,7 +2,6 @@ package com.sharp.sharpshap.exceptions;
 
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.sharp.sharpshap.error.ErrorResponse;
-import lombok.EqualsAndHashCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -148,7 +146,33 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(ProductChangeRequestException.class)
     public ResponseEntity<String>errorProductChangeRequestException(ProductChangeRequestException exception){
-        logger.error("ProductException: errorProduct(errorProductChangeRequestException  ~~нельзя удалять заявку" + exception.getMessage());
+        logger.error("ProductChangeRequestException: errorProduct(errorProductChangeRequestException  ~~нельзя удалять заявку" + exception.getMessage());
         return ResponseEntity.status(HttpStatus.LOCKED).body(exception.getMessage());
     }
+    @ExceptionHandler(ServiceCatalogException.class)
+    public ResponseEntity<String>errorCatalogServiceException(ServiceCatalogException exception){
+        logger.error("ServiceCatalogException: errorCatalogServiceException" + exception.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
+    }
+
+    @ExceptionHandler(TariffPlaneException.class)
+    public ResponseEntity<String>errorTariffPlaneException(TariffPlaneException exception){
+        logger.error("TariffPlaneException: errorTariffPlaneException" + exception.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
+    }
+
+    @ExceptionHandler(TypePaymentException.class)
+    public ResponseEntity<String>errorTypePaymentException(TypePaymentException exception){
+        logger.error("TariffPlaneException: errorTypePaymentException" + exception.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
+    }
+
+    @ExceptionHandler(EnumMoneyLocationException.class)
+    public ResponseEntity<String>errorEnumMoneyLocationException(EnumMoneyLocationException exception){
+        logger.error("EnumMoneyLocationException: errorEnumMoneyLocationException" + exception.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(exception.getMessage());
+    }
+
+
+
 }

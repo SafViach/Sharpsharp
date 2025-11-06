@@ -8,7 +8,7 @@ import lombok.*;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class RequestProductSearchDTO {
+public class RequestSearchByLineDTO {
     @NotBlank(message = "Поле для поиска не может быть пустым")
     @Size(min = 2, message = "Введите мин 2 символа для поиска товара")
     @Pattern(regexp = "^[1-90a-zA-Zа-яА-ЯёЁ\s-/]+$", message = "Допустимы только русские и английские буквы," +

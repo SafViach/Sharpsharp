@@ -60,13 +60,15 @@ public class ProductController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<ResponseProductSlice> searchProductByLine(@Valid @RequestBody RequestProductSearchDTO productSearchDTO,
-                                                                    @CookieValue(name = "uuidTradePoint") UUID uuidTradePoint,
-                                                                    @RequestParam(defaultValue = "2") int pageSize,
-                                                                    @RequestParam(required = false) UUID uuidProductAfter) {
-        logger.info("ProductController: ---searchProductByLine поиск продуктов по подстраке :" + productSearchDTO.getLineSearch());
+    public ResponseEntity<ResponseProductSlice> searchProductByLine(
+            @Valid @RequestBody RequestSearchByLineDTO requestSearchByLineDTO,
+            @CookieValue(name = "uuidTradePoint") UUID uuidTradePoint,
+            @RequestParam(defaultValue = "2") int pageSize,
+            @RequestParam(required = false) UUID uuidProductAfter) {
+        logger.info("ProductController: ---searchProductByLine поиск продуктов по подстраке :"
+                + requestSearchByLineDTO.getLineSearch());
         ResponseProductSlice sliceProducts = productService.searchByLine(
-                productSearchDTO,
+                requestSearchByLineDTO,
                 uuidTradePoint,
                 uuidProductAfter,
                 pageSize);

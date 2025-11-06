@@ -30,7 +30,6 @@ public class ResponseProductDTO {
     private String currency;
     private BigDecimal currencyRate;
     private String statusProduct;
-//    private CategorySubcategory categorySubcategory;
     private String category;
     private String subcategory;
     private BigDecimal priceWithVat;
@@ -43,33 +42,33 @@ public class ResponseProductDTO {
         logger.info("ResponseProductDTO: ---toInResponseProductDTO :  product преобразуем в  ResponseProductDTO");
         return new ResponseProductDTO(
                 product.getId(),
-                Optional.ofNullable(product.getBrand()).orElse(""),
-                Optional.ofNullable(product.getModel()).orElse(""),
-                Optional.ofNullable(product.getCharacteristics()).orElse(""),
+                Optional.ofNullable(product.getBrand()).orElse(" "),
+                Optional.ofNullable(product.getModel()).orElse(" "),
+                Optional.ofNullable(product.getCharacteristics()).orElse(" "),
                 product.getQuantity(),
                 Optional.ofNullable(product.getCurrency())
                         .map(EnumCurrency::getDescription)
-                        .orElse(""),
+                        .orElse(" "),
                 product.getCurrencyRate(),
                 Optional.ofNullable(product.getStatusProduct())
                         .map(EnumStatusProduct::getStatus)
-                        .orElse(""),
+                        .orElse(" "),
                 Optional.ofNullable(product.getCategorySubcategory())
                         .map(CategorySubcategory::getCategory)
                         .map(Category::getName)
-                        .orElse(""),
+                        .orElse(" "),
                 Optional.ofNullable(product.getCategorySubcategory())
                         .map(CategorySubcategory::getSubcategory)
                         .map(Subcategory::getName)
-                        .orElse(""),
+                        .orElse(" "),
                 product.getPriceWithVat(),
                 product.getPriceSelling(),
                 Optional.ofNullable(product.getUserAcceptedProduct())
                         .map(user ->
                                 Optional.ofNullable(user.getFirstName()).orElse("") + " " +
-                                        Optional.ofNullable(user.getLastName()).orElse("")
+                                        Optional.ofNullable(user.getLastName()).orElse(" ")
                         )
-                        .orElse(""),
+                        .orElse(" "),
                 product.getSku());
     }
 }
